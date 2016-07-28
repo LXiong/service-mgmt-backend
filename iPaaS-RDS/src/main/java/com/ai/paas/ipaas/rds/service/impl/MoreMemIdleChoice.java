@@ -2,7 +2,8 @@ package com.ai.paas.ipaas.rds.service.impl;
 
 import java.util.List;
 
-import com.ai.paas.ipaas.rds.dbmodel.ResourcePool;
+import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
+
 
 /** 
  * @author  作者 “WTF” E-mail: 1031248990@qq.com

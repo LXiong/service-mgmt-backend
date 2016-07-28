@@ -1,6 +1,6 @@
 package com.ai.paas.ipaas.rds.service.impl;
 
-import com.ai.paas.ipaas.rds.nmmodel.RDSResult;
+import com.ai.paas.ipaas.rds.service.transfer.vo.RDSResult;
 
 /** 
  * @author  作者 “WTF” E-mail: 1031248990@qq.com

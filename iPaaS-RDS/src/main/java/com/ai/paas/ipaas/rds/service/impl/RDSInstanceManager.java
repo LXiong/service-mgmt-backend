@@ -18,13 +18,20 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ai.paas.ipaas.PaasException;
+import com.ai.paas.ipaas.ServiceUtil;
 import com.ai.paas.ipaas.agent.util.AgentUtil;
 import com.ai.paas.ipaas.agent.util.AidUtil;
 import com.ai.paas.ipaas.ccs.constants.ConfigCenterDubboConstants.PathType;
 import com.ai.paas.ipaas.ccs.service.ICCSComponentManageSv;
 import com.ai.paas.ipaas.ccs.service.dto.CCSComponentOperationParam;
+import com.ai.paas.ipaas.rds.dao.interfaces.RdsInstanceBaseMapper;
+import com.ai.paas.ipaas.rds.dao.interfaces.RdsInstanceStatusMapper;
+import com.ai.paas.ipaas.rds.dao.interfaces.RdsInstanceipportMapper;
+import com.ai.paas.ipaas.rds.dao.interfaces.RdsResourcepoolMapper;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstanceBase;
 import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstanceSlaver;
 import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstancebatmaster;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsResourcepool;
 import com.ai.paas.ipaas.rds.dao.wo.InstanceBase;
 import com.ai.paas.ipaas.rds.manage.rest.interfaces.IRDSInstanceManager;
 import com.ai.paas.ipaas.rds.service.constant.InstanceType;
@@ -100,8 +107,9 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		
 		while(!instanceStack.isEmpty()){
 			InstanceBase instance = instanceStack.pop();
-			instance.instancestatus.instanceStatus = RDSCommonConstant.INS_FREEZE;
-			instanceBaseRepo.save(instance);
+			instance.getRdsInstanceStatus().setInstancestatus(RDSCommonConstant.INS_FREEZE);
+			RdsInstanceStatusMapper statusMapper = ServiceUtil.getMapper(RdsInstanceStatusMapper.class);
+			statusMapper.updateByPrimaryKeySelective(instance.getRdsInstanceStatus());
 			dealCancelInstanceDevided(instance);
 			deleteZK(instance);
 		};
@@ -116,8 +124,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 */
 	private void deleteZK(InstanceBase instanceRDS) {
 		CCSComponentOperationParam op = new CCSComponentOperationParam();
-		op.setUserId(instanceRDS.user_id);
-		op.setPath(RDSCommonConstant.RDS_ZK_PATH + instanceRDS.instanceid);
+		op.setUserId(instanceRDS.getRdsInstanceBase().getUserId());
+		op.setPath(RDSCommonConstant.RDS_ZK_PATH + instanceRDS.getRdsInstanceBase().getInstanceid());
 		op.setPathType(PathType.READONLY);
 
 		try {
@@ -135,36 +143,46 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 */
 	private Stack<InstanceBase> getInstanceStack(long instanceid) {
 		Stack<InstanceBase> instanceStack = new Stack<InstanceBase>();
-		RdsInstanceBaseMapper
-		
-		
-		InstanceBase instanceInfo = instanceBaseRepo.findOne(instanceid);
+//		RdsInstanceBaseMapper ibm = ServiceUtil.getMapper(RdsInstanceBaseMapper.class);
+//		RdsInstanceBase instanceInfo = ibm.selectByPrimaryKey(instanceid);
+		InstanceBase ibTool = new InstanceBase();
+		InstanceBase instanceInfo = ibTool.getCompleteInstanceBase(instanceid);
 		if(null != instanceInfo)
 			instanceStack.push(instanceInfo);
-		if(1 == instanceInfo.instanceNetworkType){
-			InstanceBase instanceBMInfo = instanceBaseRepo.findOne(instanceInfo.getInstancebatmaster().getInstancebatmasterid());
-			if(null != instanceBMInfo)
+		if(1 == instanceInfo.getRdsInstanceBase().getInstancenetworktype()){
+			if(null != instanceInfo.getRdsInstanceBatMaster()){
+				InstanceBase instanceBMInfo = ibTool.getCompleteInstanceBase(instanceInfo.getRdsInstanceBatMaster().getInstancebatmasterid());
 				instanceStack.push(instanceBMInfo);
-			List<Long> slaverIdList = new ArrayList<Long>();
-			for(RdsInstanceSlaver is : instanceInfo.getInstanceslaver()){
-				slaverIdList.add(is.getInstanceslaverid());
 			}
-			for(InstanceBase ib : instanceBaseRepo.findAll(slaverIdList)){
-				if(null != ib)
-					instanceStack.push(ib);
+			if(null != instanceInfo.getRdsInstanceSlaverList()){
+				for(RdsInstanceSlaver is : instanceInfo.getRdsInstanceSlaverList()){
+					instanceStack.push(ibTool.getCompleteInstanceBase(is.getInstanceslaverid()));
+				}
 			}
 		}
+		
 		return instanceStack;
 	}
 
+	/**
+	 * 数据库已经添加了触发器trigger
+	 * 从表将与主表一同删除
+	 * @param instanceBase
+	 */
 	private void dealCancelInstanceDevided(InstanceBase instanceBase) {
 		// 停止运行实例，并移除相关镜像、配置、数据
 		stopInstance(instanceBase);
 		// 删除InstanceBase表中的信息
-		instanceBaseRepo.delete(instanceBase);
+		RdsInstanceBaseMapper instanceBaseMapper = ServiceUtil.getMapper(RdsInstanceBaseMapper.class);
+		instanceBaseMapper.deleteByPrimaryKey(instanceBase.getRdsInstanceBase().getInstanceid());
+//		instanceBaseRepo.delete(instanceBase);
 		// 资源恢复更新
-		instanceBase.getInstanceresourcebelonger().setUsedmemory(instanceBase.getInstanceresourcebelonger().getUsedmemory() - instanceBase.getInstancespaceinfo().getExternalStorage());
-		resourcePoolRepo.saveAndFlush(instanceBase.getInstanceresourcebelonger());
+		RdsResourcepoolMapper resPoolMapper = ServiceUtil.getMapper(RdsResourcepoolMapper.class);
+		RdsResourcepool rdsres = resPoolMapper.selectByPrimaryKey(instanceBase.getRdsInstanceBase().getInstanceresourcebelonger());
+		rdsres.setUsedmemory(rdsres.getUsedmemory().intValue() - instanceBase.getRdsInstanceSpaceInfo().getExternalstorage().intValue());
+		resPoolMapper.updateByPrimaryKey(rdsres);
+//		instanceBase.getInstanceresourcebelonger().setUsedmemory(instanceBase.getInstanceresourcebelonger().getUsedmemory() - instanceBase.getInstancespaceinfo().getExternalStorage());
+//		resourcePoolRepo.saveAndFlush(instanceBase.getInstanceresourcebelonger());
 	}
 
 	/**
@@ -220,7 +238,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		CreateRDS createObject = g.getGson().fromJson(create, CreateRDS.class);
 		CreateRDSResult createResult = new CreateRDSResult(ResponseResultMark.WARN_INIT_STATUS);
 		// 检查用户操作权限是否合法
-		if (false == CheckLegal(createObject.instanceBase.user_id, createObject.instanceBase.serial_number,
+		if (false == CheckLegal(createObject.instanceBase.getRdsInstanceBase().getUserId(), createObject.instanceBase.getRdsInstanceBase().getSerialNumber(),
 				createObject.token)) {
 			createResult.setStatus(ResponseResultMark.ERROR_ILLEGAL_AUTHORITY);
 			return g.getGson().toJson(createResult);
@@ -615,12 +633,14 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 
 	private boolean CheckData(CreateRDS createObject) {
 		// TODO Auto-generated method stub
-		if ((null == createObject.token) && (null == createObject.instanceBase.instanceName)
-				&& (null == createObject.instanceBase.user_id) && (null == createObject.instanceBase.serial_number)
-				&& (1 > createObject.instanceBase.instanceNetworkType)
-				&& (null == createObject.instanceBase.instancespaceinfo)
-				&& (null == createObject.instanceBase.instancebaseconfig)
-				&& (null == createObject.instanceBase.instanceimagebelonger)) {
+		if ((null == createObject.token) && (null == createObject.instanceBase.getRdsInstanceBase().getInstancename())
+				&& (null == createObject.instanceBase.getRdsInstanceBase().getUserId()) 
+				&& (null == createObject.instanceBase.getRdsInstanceBase().getSerialNumber())
+				&& (1 > createObject.instanceBase.getRdsInstanceBase().getInstancenetworktype())
+				&& (null == createObject.instanceBase.getRdsInstanceSpaceInfo())
+				&& (null == createObject.instanceBase.getRdsInstanceBaseConfig())
+				&& (null == createObject.instanceBase.getRdsImageResource())
+				&& (null == createObject.instanceBase.getRdsInstanceRootAccount())) {
 			return false;
 		} else {
 			return true;
