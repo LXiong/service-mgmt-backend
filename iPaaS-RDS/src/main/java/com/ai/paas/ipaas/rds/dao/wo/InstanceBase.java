@@ -309,7 +309,8 @@ public class InstanceBase {
 		instanceBaseMapper.insertSelective(rdsInstanceBase);
 		// warning下策，只能把刚才存的通过多条件查一下
 		RdsInstanceBaseCriteria rdsIncBsCri = new RdsInstanceBaseCriteria();
-		rdsIncBsCri.createCriteria().andInstancecreatetimeEqualTo(rdsInstanceBase.getInstancecreatetime()).andInstancenameEqualTo(rdsInstanceBase.getInstancename()).andUserIdEqualTo(rdsInstanceBase.getUserId());
+		rdsIncBsCri.createCriteria().andInstancecreatetimeEqualTo(rdsInstanceBase.getInstancecreatetime())
+			.andInstancenameEqualTo(rdsInstanceBase.getInstancename()).andUserIdEqualTo(rdsInstanceBase.getUserId());
 		List<RdsInstanceBase> rdsIncBs = instanceBaseMapper.selectByExample(rdsIncBsCri);
 		if(rdsIncBs.size() == 1){
 			this.rdsInstanceBase = rdsIncBs.get(0);

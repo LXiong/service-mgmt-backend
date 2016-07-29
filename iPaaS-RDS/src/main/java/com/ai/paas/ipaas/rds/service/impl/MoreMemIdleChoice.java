@@ -2,7 +2,8 @@ package com.ai.paas.ipaas.rds.service.impl;
 
 import java.util.List;
 
-import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsResourcepool;
+
 
 
 /** 
@@ -14,23 +15,23 @@ import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
 public class MoreMemIdleChoice implements ChoiceRes{
 
 	@Override
-	public ResourcePool choiceOne(List<ResourcePool> canUseResList) {
-		ResourcePool maxMemRes = canUseResList.get(0);
+	public RdsResourcepool choiceOne(List<RdsResourcepool> canUseResList) {
+		RdsResourcepool maxMemRes = canUseResList.get(0);
 		for(int i = 0; i < canUseResList.size(); i++){
-			if((maxMemRes.totalmemory-maxMemRes.usedmemory) < (canUseResList.get(i).totalmemory-canUseResList.get(i).usedmemory)){
+			if((maxMemRes.getTotalmemory()-maxMemRes.getUsedmemory()) < (canUseResList.get(i).getTotalmemory()-canUseResList.get(i).getUsedmemory())){
 				maxMemRes = canUseResList.get(i);
 			}
 		}
 		return maxMemRes;
 	}
-	public ResourcePool choiceOne(List<ResourcePool> canUseResList, List<ResourcePool> exceptList) {
+	public RdsResourcepool choiceOne(List<RdsResourcepool> canUseResList, List<RdsResourcepool> exceptList) {
 		canUseResList.removeAll(exceptList);
 		if(canUseResList.size() < 0){
 			return null;
 		}
-		ResourcePool maxMemRes = canUseResList.get(0);
+		RdsResourcepool maxMemRes = canUseResList.get(0);
 		for(int i = 0; i < canUseResList.size(); i++){
-			if((maxMemRes.totalmemory-maxMemRes.usedmemory) < (canUseResList.get(i).totalmemory-canUseResList.get(i).usedmemory)){
+			if((maxMemRes.getTotalmemory()-maxMemRes.getUsedmemory()) < (canUseResList.get(i).getTotalmemory()-canUseResList.get(i).getUsedmemory())){
 				maxMemRes = canUseResList.get(i);
 			}
 		}

@@ -2,7 +2,7 @@ package com.ai.paas.ipaas.rds.service.impl;
 
 import java.util.List;
 
-import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsResourcepool;
 
 
 /** 
@@ -19,11 +19,11 @@ public class ChoiceResStrategy {
 		this.choiceRes = choiceRes;
 	}
 	
-	public ResourcePool makeDecision(List<ResourcePool> canUseResList){
+	public RdsResourcepool makeDecision(List<RdsResourcepool> canUseResList){
 		return choiceRes.choiceOne(canUseResList);
 	}
 
-	public ResourcePool makeDecision(List<ResourcePool> canUseResList, List<ResourcePool> exceptList) {
+	public RdsResourcepool makeDecision(List<RdsResourcepool> canUseResList, List<RdsResourcepool> exceptList) {
 		// TODO Auto-generated method stub
 		return choiceRes.choiceOne(canUseResList,exceptList);
 	}

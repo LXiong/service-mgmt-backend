@@ -13,7 +13,12 @@ public class RdsInstanceStatus {
 
     private Long instancestatusbelonger;
 
-    public Long getInstancestatusid() {
+    public RdsInstanceStatus(int insActivation) {
+		// TODO Auto-generated constructor stub
+    	this.instancestatus = insActivation;
+	}
+
+	public Long getInstancestatusid() {
         return instancestatusid;
     }
 

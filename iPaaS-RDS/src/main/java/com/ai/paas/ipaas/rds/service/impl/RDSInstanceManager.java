@@ -30,9 +30,13 @@ import com.ai.paas.ipaas.rds.dao.interfaces.RdsInstanceipportMapper;
 import com.ai.paas.ipaas.rds.dao.interfaces.RdsResourcepoolMapper;
 import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstanceBase;
 import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstanceSlaver;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstanceStatus;
 import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstancebatmaster;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstanceipport;
 import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsResourcepool;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsResourcepoolCriteria;
 import com.ai.paas.ipaas.rds.dao.wo.InstanceBase;
+import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
 import com.ai.paas.ipaas.rds.manage.rest.interfaces.IRDSInstanceManager;
 import com.ai.paas.ipaas.rds.service.constant.InstanceType;
 import com.ai.paas.ipaas.rds.service.constant.RDSCommonConstant;
@@ -250,7 +254,10 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		}
 		
 		// 查询资源情况，根据请求情况与资源情况获取分配计划
-		List<ResourcePool> allResource = resourcePoolRepo.findAll();
+		RdsResourcepoolMapper rdsResPoolMapper =  ServiceUtil.getMapper(RdsResourcepoolMapper.class);
+		RdsResourcepoolCriteria rdsResPoolCri = new RdsResourcepoolCriteria();
+		rdsResPoolCri.createCriteria().andCurrentportLessThan(65000);
+		List<RdsResourcepool> allResource = rdsResPoolMapper.selectByExample(rdsResPoolCri);
 		RDSResourcePlan resourcePlan = getResourcePlan(createObject, allResource);
 		if(null == resourcePlan.instanceresourcebelonger){
 			createResult.setStatus(ResponseResultMark.ERROR_LESS_MEMORY_SPACE);
@@ -647,36 +654,37 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		}
 	}
 
-	private RDSResourcePlan getResourcePlan(CreateRDS createObject, List<ResourcePool> resourceList) {
-		RDSResourcePlan resourcePlan = new RDSResourcePlan();
+	private RDSResourcePlan getResourcePlan(CreateRDS createObject, List<RdsResourcepool> resourceList) {
+		
 		// 根据需求找到可用资源列表
-		List<ResourcePool> usableResourceList = getMasterUsableResource(createObject, resourceList);
-		switch (createObject.instanceBase.instanceNetworkType) {
+		List<RdsResourcepool> usableResourceList = getMasterUsableResource(createObject, resourceList);
+		switch (createObject.instanceBase.getRdsInstanceBase().getInstancenetworktype()) {
 		case InstanceType.MASTER:
+			RDSResourcePlan resourcePlan = new RDSResourcePlan();
 			// 选择适当的主机进行分配资源
 			ChoiceResStrategy crs = new ChoiceResStrategy(new MoreMemIdleChoice());
-			ResourcePool decidedRes = crs.makeDecision(usableResourceList);
+			RdsResourcepool decidedRes = crs.makeDecision(usableResourceList);
 			if (null == decidedRes) {
 				return null;
 			}
 			// 生成资源分配信息
-			decidedRes.currentport = decidedRes.currentport + 1;
-			decidedRes.usedmemory = decidedRes.usedmemory - createObject.instanceBase.instancespaceinfo.externalStorage;
+			decidedRes.setCurrentport(decidedRes.getCurrentport() + 1);
+			decidedRes.setUsedmemory(decidedRes.getUsedmemory().intValue() + createObject.instanceBase.getRdsInstanceSpaceInfo().getExternalstorage().intValue());
 			resourcePlan.instanceresourcebelonger = decidedRes;
 
-			InstanceIpPort instanceIpPort = new InstanceIpPort(decidedRes.hostip, decidedRes.currentport,
-					Calendar.getInstance().getTime(), Calendar.getInstance().getTime());
+			RdsInstanceipport instanceIpPort = new RdsInstanceipport(decidedRes.getHostip(), decidedRes.getCurrentport());
 			// instanceIpPort.setInstanceipportbelonger(createObject.instanceBase);
 			resourcePlan.instanceIpPort = instanceIpPort;
 
-			InstanceStatus instanceStatus = new InstanceStatus(RDSCommonConstant.INS_ACTIVATION,
-					Calendar.getInstance().getTime(), Calendar.getInstance().getTime());
+			RdsInstanceStatus instanceStatus = new RdsInstanceStatus(RDSCommonConstant.INS_ACTIVATION);
 			// instanceStatus.setInstancestatusbelonger(createObject.instanceBase);
 			resourcePlan.instanceStatus = instanceStatus;
-
-			break;
+			return resourcePlan;
+		case InstanceType.BATMASTER:
+		case InstanceType.SLAVER:
+		default:
 		}
-		return resourcePlan;
+		return null;
 	}
 
 	/**
@@ -686,14 +694,14 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 * @param resourceList
 	 * @return
 	 */
-	private List<ResourcePool> getMasterUsableResource(CreateRDS createObject, List<ResourcePool> resourceList) {
+	private List<RdsResourcepool> getMasterUsableResource(CreateRDS createObject, List<RdsResourcepool> resourceList) {
 		// for(int i = 0; i < resourceList.size(); i++){
-		List<ResourcePool> canUseRes = new LinkedList<ResourcePool>();
-		for (ResourcePool rp : resourceList) {
-			int canUseExtMemSize = rp.totalmemory - rp.usedmemory;
-			if ((RDSCommonConstant.RES_STATUS_USABLE == rp.status) && (RDSCommonConstant.RES_CYCLE_USABLE == rp.cycle)
-					&& (canUseExtMemSize > createObject.instanceBase.instancespaceinfo.externalStorage)
-					&& ((rp.currentport + 1) < rp.maxport)) {
+		List<RdsResourcepool> canUseRes = new LinkedList<RdsResourcepool>();
+		for (RdsResourcepool rp : resourceList) {
+			int canUseExtMemSize = rp.getTotalmemory() - rp.getUsedmemory();
+			if ((RDSCommonConstant.RES_STATUS_USABLE == rp.getStatus()) && (RDSCommonConstant.RES_CYCLE_USABLE == rp.getCycle())
+					&& (canUseExtMemSize > createObject.instanceBase.getRdsInstanceSpaceInfo().getExternalstorage())
+					&& ((rp.getCurrentport() + 1) < rp.getMaxport())) {
 				// if((decidedRes.currentport+1) < decidedRes.maxport){
 				canUseRes.add(rp);
 			}
@@ -744,26 +752,28 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 */
 	private InstanceBase savePlan(RDSResourcePlan resourcePlan, InstanceBase instanceBase,int InstanceBaseNetworkType) {
 //		InstanceBase instanceBase = createObject.instanceBase;
-		instanceBase.instanceNetworkType = InstanceBaseNetworkType;
+		instanceBase.getRdsInstanceBase().setInstancenetworktype(InstanceBaseNetworkType);
 		if(InstanceBaseNetworkType == InstanceType.BATMASTER){
-			instanceBase.instanceName = instanceBase.instanceName + "-BATMASTER-" + Math.random();
+			instanceBase.getRdsInstanceBase().setInstancename(instanceBase.getRdsInstanceBase().getInstancename() + "-BATMASTER-" + Math.random());
 		}
 		if(InstanceBaseNetworkType == InstanceType.SLAVER){
-			instanceBase.instanceName = instanceBase.instanceName + "-SLAVER-" + Math.random();
+			instanceBase.getRdsInstanceBase().setInstancename(instanceBase.getRdsInstanceBase().getInstancename() + "-SLAVER-" + Math.random());
 		}
 		
 		// InstanceBase作为子表时的指针指向ImageResource和ResourcePool，但因为ImageResource已经存在，不需要关联
-		instanceBase.setInstanceresourcebelonger(resourcePlan.instanceresourcebelonger);
+		instanceBase.getRdsInstanceBase().setInstanceresourcebelonger(resourcePlan.instanceresourcebelonger.getResourceid());
 		// 将生成信息保存到InstanceBase
-		instanceBase.setInstanceipport(resourcePlan.instanceIpPort);
-		instanceBase.setInstancestatus(resourcePlan.instanceStatus);
+		instanceBase.setRdsInstanceipport(resourcePlan.instanceIpPort);
+		
+//		instanceBase.setInstanceipport(resourcePlan.instanceIpPort);
+//		instanceBase.setInstancestatus(resourcePlan.instanceStatus);
 
 		// 已经存在的数据，子表的对象指针指向主表
-		instanceBase.getInstancebaseconfig().setInstancebaseconfigbelonger(instanceBase);
-		instanceBase.getInstanceipport().setInstanceipportbelonger(instanceBase);
-		instanceBase.getInstancespaceinfo().setInstancespaceinfobelonger(instanceBase);
-		instanceBase.getInstancerootaccount().setInstancerootaccountbelonger(instanceBase);
-		instanceBase.getInstancestatus().setInstancestatusbelonger(instanceBase);
+//		instanceBase.getInstancebaseconfig().setInstancebaseconfigbelonger(instanceBase);
+//		instanceBase.getInstanceipport().setInstanceipportbelonger(instanceBase);
+//		instanceBase.getInstancespaceinfo().setInstancespaceinfobelonger(instanceBase);
+//		instanceBase.getInstancerootaccount().setInstancerootaccountbelonger(instanceBase);
+//		instanceBase.getInstancestatus().setInstancestatusbelonger(instanceBase);
 
 		// 保存实例
 		InstanceBase savedInstanceBase = instanceBaseRepo.save(instanceBase);

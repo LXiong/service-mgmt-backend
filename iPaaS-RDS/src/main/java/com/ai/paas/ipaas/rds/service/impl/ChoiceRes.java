@@ -2,7 +2,7 @@ package com.ai.paas.ipaas.rds.service.impl;
 
 import java.util.List;
 
-import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsResourcepool;
 
 
 /** 
@@ -13,6 +13,6 @@ import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
  */
 public interface ChoiceRes {
 
-	public ResourcePool choiceOne(List<ResourcePool> canUseResList);
-	public ResourcePool choiceOne(List<ResourcePool> canUseResList, List<ResourcePool> exceptList);
+	public RdsResourcepool choiceOne(List<RdsResourcepool> canUseResList);
+	public RdsResourcepool choiceOne(List<RdsResourcepool> canUseResList, List<RdsResourcepool> exceptList);
 }

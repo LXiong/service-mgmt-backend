@@ -1,6 +1,7 @@
 package com.ai.paas.ipaas.rds.dao.mapper.bo;
 
 import java.sql.Timestamp;
+import java.util.Date;
 
 public class RdsInstanceipport {
     private Long instanceipportid;
@@ -17,7 +18,36 @@ public class RdsInstanceipport {
 
     private Long instanceipportbelonger;
 
-    public Long getInstanceipportid() {
+    public RdsInstanceipport(String instanceip, Integer port) {
+		super();
+		this.instanceip = instanceip;
+		this.port = port;
+	}
+
+	
+
+	public RdsInstanceipport(String instanceip, Integer port, Long instanceipportbelonger) {
+		super();
+		this.instanceip = instanceip;
+		this.port = port;
+		this.instanceipportbelonger = instanceipportbelonger;
+	}
+
+
+
+	public RdsInstanceipport(Timestamp instancecreatetime, String instanceip, Timestamp instancelastupdatetime,
+			Integer port, Long instanceipportbelonger) {
+		super();
+		this.instancecreatetime = instancecreatetime;
+		this.instanceip = instanceip;
+		this.instancelastupdatetime = instancelastupdatetime;
+		this.port = port;
+		this.instanceipportbelonger = instanceipportbelonger;
+	}
+
+
+
+	public Long getInstanceipportid() {
         return instanceipportid;
     }
 

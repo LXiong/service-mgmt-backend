@@ -2,7 +2,7 @@ package com.ai.paas.ipaas.rds.service.transfer.vo;
 
 import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstanceStatus;
 import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsInstanceipport;
-import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
+import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsResourcepool;
 
 /**  
  * 生成字段-RDSResourcePlan
@@ -15,7 +15,7 @@ import com.ai.paas.ipaas.rds.dao.wo.ResourcePool;
  */
 public class RDSResourcePlan {
 
-	public ResourcePool instanceresourcebelonger;
+	public RdsResourcepool instanceresourcebelonger;
 	public RdsInstanceipport instanceIpPort;
 	public RdsInstanceStatus instanceStatus;
 }
