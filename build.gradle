@@ -175,7 +175,7 @@ project("iPaaS-SES") {
     }
 }
 
-project("iPaaS-RDS") {
+project("iPaaS-RDS-X") {
     project.ext {
         appName = "ipaas-rds"
     }
