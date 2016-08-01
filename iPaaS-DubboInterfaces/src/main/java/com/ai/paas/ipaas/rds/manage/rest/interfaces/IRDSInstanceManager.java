@@ -99,4 +99,12 @@ public interface IRDSInstanceManager extends ISrvManager{
 	@POST
 	public String getinstanceinfo(String getinstanceinfo);
 	
+	/**
+	 * 扩容
+	 * @param modify
+	 * @return reslut
+	 */
+	@Path("/modify")
+	@POST
+	public String modify(String modify);
 }
