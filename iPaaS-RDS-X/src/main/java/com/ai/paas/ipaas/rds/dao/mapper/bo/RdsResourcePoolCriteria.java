@@ -815,6 +815,76 @@ public class RdsResourcePoolCriteria {
             return (Criteria) this;
         }
 
+        public Criteria andVolumnPathIsNull() {
+            addCriterion("volumn_path is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathIsNotNull() {
+            addCriterion("volumn_path is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathEqualTo(String value) {
+            addCriterion("volumn_path =", value, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathNotEqualTo(String value) {
+            addCriterion("volumn_path <>", value, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathGreaterThan(String value) {
+            addCriterion("volumn_path >", value, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathGreaterThanOrEqualTo(String value) {
+            addCriterion("volumn_path >=", value, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathLessThan(String value) {
+            addCriterion("volumn_path <", value, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathLessThanOrEqualTo(String value) {
+            addCriterion("volumn_path <=", value, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathLike(String value) {
+            addCriterion("volumn_path like", value, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathNotLike(String value) {
+            addCriterion("volumn_path not like", value, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathIn(List<String> values) {
+            addCriterion("volumn_path in", values, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathNotIn(List<String> values) {
+            addCriterion("volumn_path not in", values, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathBetween(String value1, String value2) {
+            addCriterion("volumn_path between", value1, value2, "volumnPath");
+            return (Criteria) this;
+        }
+
+        public Criteria andVolumnPathNotBetween(String value1, String value2) {
+            addCriterion("volumn_path not between", value1, value2, "volumnPath");
+            return (Criteria) this;
+        }
+
         public Criteria andInstancecreatetimeIsNull() {
             addCriterion("instancecreatetime is null");
             return (Criteria) this;

@@ -25,6 +25,8 @@ public class RdsResourcePool {
 
     private Integer usedmemory;
 
+    private String volumnPath;
+
     private Timestamp instancecreatetime;
 
     private Timestamp instancelastupdatetime;
@@ -115,6 +117,14 @@ public class RdsResourcePool {
 
     public void setUsedmemory(Integer usedmemory) {
         this.usedmemory = usedmemory;
+    }
+
+    public String getVolumnPath() {
+        return volumnPath;
+    }
+
+    public void setVolumnPath(String volumnPath) {
+        this.volumnPath = volumnPath == null ? null : volumnPath.trim();
     }
 
     public Timestamp getInstancecreatetime() {

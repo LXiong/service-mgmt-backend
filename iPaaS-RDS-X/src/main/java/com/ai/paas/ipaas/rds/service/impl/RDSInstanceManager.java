@@ -480,9 +480,9 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		 * image?
 		 * datapath:?(mysqlVolumnPath)
 		 * homepath
-		 * whitelist
-		 * slaver_name
-		 * slaver_password
+		 * !whitelist
+		 * !slaver_name
+		 * !slaver_password
 		 * container-name
 		 * server-id
 		 * dbStorage
