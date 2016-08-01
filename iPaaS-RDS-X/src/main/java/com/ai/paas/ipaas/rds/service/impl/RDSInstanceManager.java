@@ -472,7 +472,20 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			throws ClientProtocolException, IOException, PaasException {
 		switch(savedRdsIncBase.getIncType()){
 		/**
-		 * 
+		 * filename
+		 * sshuser
+		 * sshpassword
+		 * ip
+		 * port
+		 * image?
+		 * datapath:?(mysqlVolumnPath)
+		 * homepath
+		 * whitelist
+		 * slaver_name
+		 * slaver_password
+		 * container-name
+		 * server-id
+		 * dbStorage
 		 */
 		case InstanceType.MASTER:
 			String basePath = AgentUtil.getAgentFilePath(AidUtil.getAid());
@@ -519,9 +532,127 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			AgentUtil.executeCommand(basePath + runImage, AidUtil.getAid());
 
 			return false;
+			/**
+			 * filename
+			 * sshuser
+			 * sshpassword
+			 * ip
+			 * port
+			 * master-ip
+			 * master-port
+			 * image?
+			 * datapath:?(mysqlVolumnPath)
+			 * homepath
+			 * root_name
+			 * root_password
+			 * container-name
+			 * server-id
+			 * dbStorage
+			 */
 		case InstanceType.SLAVER:
+			String basePath_s = AgentUtil.getAgentFilePath(AidUtil.getAid());
+			// 1.先将需要执行镜像命令的机器配置文件上传上去。
+			InputStream in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/init_ansible_ssh_hosts.sh");
+			String[] cnt_s = AgentUtil.readFileLines(in_s);
+			in_s.close();
+			AgentUtil.uploadFile("rds/init_ansible_ssh_hosts.sh", cnt_s, AidUtil.getAid());
+			AgentUtil.executeCommand("chmod +x " + basePath_s + "rds/init_ansible_ssh_hosts.sh", AidUtil.getAid());
+
+			// 2.执行这个初始化命令
+			String mkSshHosts_s = fillStringByArgs(CREATE_ANSIBLE_HOSTS,
+					new String[] { basePath_s + "rds", savedRdsIncBase.getIncIp().replace(".", ""),
+							savedRdsIncBase.getIncIp() });
+			// LOG.debug("---------mkSshHosts {}----------", mkSshHosts);
+			AgentUtil.executeCommand(basePath_s + mkSshHosts_s, AidUtil.getAid());
+
+			in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/rdsimage.yml");
+			cnt_s = AgentUtil.readFileLines(in_s);
+			in_s.close();
+			AgentUtil.uploadFile("rds/rdsimage.yml", cnt_s, AidUtil.getAid());
+
+			// 还得上传文件
+			in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/ansible_run_image.sh");
+			cnt_s = AgentUtil.readFileLines(in_s);
+			in_s.close();
+			AgentUtil.uploadFile("rds/ansible_run_image.sh", cnt_s, AidUtil.getAid());
+			AgentUtil.executeCommand("chmod +x " + basePath_s + "rds/ansible_run_image.sh", AidUtil.getAid());
+			// 开始执行
+			String runImage_s = fillStringByArgs(DOCKER_4_GM_AND_TOMCAT,
+					new String[] { ""
+//							, 
+//							savedRdsIncBase.instanceipport.instanceIp.replace(".", ""),
+//							savedRdsIncBase.instanceresourcebelonger.getSshUser(),
+//							savedRdsIncBase.instanceresourcebelonger.getSshPassword(),
+//							savedRdsIncBase.instanceipport.getInstanceIp(),
+//							savedRdsIncBase.instanceimagebelonger.image_repository + "/" + savedRdsIncBase.instanceimagebelonger.image_name,
+//							savedRdsIncBase.instanceipport.getPort() + "",
+//							savedRdsIncBase.instancebaseconfig.instanceDataPath,
+//							savedRdsIncBase.instancebaseconfig.instanceHomePath, basePath + "rds" 
+							});
+
+			// LOG.debug("---------runImage {}----------", runImage);
+			AgentUtil.executeCommand(basePath_s + runImage_s, AidUtil.getAid());
 			return false;
+			/**
+			 * filename
+			 * sshuser
+			 * sshpassword
+			 * ip
+			 * port
+			 * master-ip
+			 * master-port
+			 * image?
+			 * datapath:?(mysqlVolumnPath)
+			 * homepath
+			 * root_name
+			 * root_password
+			 * container-name
+			 * server-id
+			 * dbStorage
+			 */
 		case InstanceType.BATMASTER:
+			String basePath_b = AgentUtil.getAgentFilePath(AidUtil.getAid());
+			// 1.先将需要执行镜像命令的机器配置文件上传上去。
+			InputStream in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/init_ansible_ssh_hosts.sh");
+			String[] cnt_b = AgentUtil.readFileLines(in_b);
+			in_b.close();
+			AgentUtil.uploadFile("rds/init_ansible_ssh_hosts.sh", cnt_b, AidUtil.getAid());
+			AgentUtil.executeCommand("chmod +x " + basePath_b + "rds/init_ansible_ssh_hosts.sh", AidUtil.getAid());
+
+			// 2.执行这个初始化命令
+			String mkSshHosts_b = fillStringByArgs(CREATE_ANSIBLE_HOSTS,
+					new String[] { basePath_b + "rds", savedRdsIncBase.getIncIp().replace(".", ""),
+							savedRdsIncBase.getIncIp() });
+			// LOG.debug("---------mkSshHosts {}----------", mkSshHosts);
+			AgentUtil.executeCommand(basePath_b + mkSshHosts_b, AidUtil.getAid());
+
+			in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/rdsimage.yml");
+			cnt_b = AgentUtil.readFileLines(in_b);
+			in_b.close();
+			AgentUtil.uploadFile("rds/rdsimage.yml", cnt_b, AidUtil.getAid());
+
+			// 还得上传文件
+			in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/ansible_run_image.sh");
+			cnt_b = AgentUtil.readFileLines(in_b);
+			in_b.close();
+			AgentUtil.uploadFile("rds/ansible_run_image.sh", cnt_b, AidUtil.getAid());
+			AgentUtil.executeCommand("chmod +x " + basePath_b + "rds/ansible_run_image.sh", AidUtil.getAid());
+			// 开始执行
+			String runImage_b = fillStringByArgs(DOCKER_4_GM_AND_TOMCAT,
+					new String[] { ""
+//							, 
+//							savedRdsIncBase.instanceipport.instanceIp.replace(".", ""),
+//							savedRdsIncBase.instanceresourcebelonger.getSshUser(),
+//							savedRdsIncBase.instanceresourcebelonger.getSshPassword(),
+//							savedRdsIncBase.instanceipport.getInstanceIp(),
+//							savedRdsIncBase.instanceimagebelonger.image_repository + "/" + savedRdsIncBase.instanceimagebelonger.image_name,
+//							savedRdsIncBase.instanceipport.getPort() + "",
+//							savedRdsIncBase.instancebaseconfig.instanceDataPath,
+//							savedRdsIncBase.instancebaseconfig.instanceHomePath, basePath + "rds" 
+							});
+
+			// LOG.debug("---------runImage {}----------", runImage);
+			AgentUtil.executeCommand(basePath_b + runImage_b, AidUtil.getAid());
 			return false;
 		default:
 			return false;
@@ -589,6 +720,36 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 //		return resourcePlan;
 //	}
 	
+	private RDSResourcePlan getResourcePlan(CreateRDS createObject, List<RdsResourcePool> resourceList) {
+		
+		// 根据需求找到可用资源列表
+		List<RdsResourcePool> usableResourceList = getMasterUsableResource(createObject.instanceBase.getDbStoreage(), resourceList);
+		switch (createObject.instanceBase.getIncType()) {
+		case InstanceType.MASTER:
+			RDSResourcePlan resourcePlan = new RDSResourcePlan();
+			// 选择适当的主机进行分配资源
+			ChoiceResStrategy crs = new ChoiceResStrategy(new MoreMemIdleChoice());
+			RdsResourcePool decidedRes = crs.makeDecision(usableResourceList);
+			if (null == decidedRes) {
+				return null;
+			}
+			// 生成资源分配信息
+			decidedRes.setCurrentport(decidedRes.getCurrentport() + 1);
+			decidedRes.setUsedmemory(decidedRes.getUsedmemory().intValue() + createObject.instanceBase.getDbStoreage());
+			
+			resourcePlan.instanceresourcebelonger = decidedRes;
+			resourcePlan.ip = decidedRes.getHostip();
+			resourcePlan.port = decidedRes.getCurrentport();
+			resourcePlan.Status = RDSCommonConstant.INS_ACTIVATION;
+			
+			return resourcePlan;
+		case InstanceType.BATMASTER:
+		case InstanceType.SLAVER:
+		default:
+		}
+		return null;
+	}
+	
 	private RDSResourcePlan getExpectResourcePlan(RdsIncBase masterInstance, List<RdsResourcePool> resourceList,
 			List<RdsResourcePool> exceptInstanceList) {
 		
@@ -632,57 +793,29 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		return true;
 	}
 
-	private RDSResourcePlan getResourcePlan(CreateRDS createObject, List<RdsResourcePool> resourceList) {
-		
-		// 根据需求找到可用资源列表
-		List<RdsResourcePool> usableResourceList = getMasterUsableResource(createObject, resourceList);
-		switch (createObject.instanceBase.getIncType()) {
-		case InstanceType.MASTER:
-			RDSResourcePlan resourcePlan = new RDSResourcePlan();
-			// 选择适当的主机进行分配资源
-			ChoiceResStrategy crs = new ChoiceResStrategy(new MoreMemIdleChoice());
-			RdsResourcePool decidedRes = crs.makeDecision(usableResourceList);
-			if (null == decidedRes) {
-				return null;
-			}
-			// 生成资源分配信息
-			decidedRes.setCurrentport(decidedRes.getCurrentport() + 1);
-			decidedRes.setUsedmemory(decidedRes.getUsedmemory().intValue() + createObject.instanceBase.getDbStoreage());
-			
-			resourcePlan.instanceresourcebelonger = decidedRes;
-			resourcePlan.ip = decidedRes.getHostip();
-			resourcePlan.port = decidedRes.getCurrentport();
-			resourcePlan.Status = RDSCommonConstant.INS_ACTIVATION;
-			
-			return resourcePlan;
-		case InstanceType.BATMASTER:
-		case InstanceType.SLAVER:
-		default:
-		}
-		return null;
-	}
 
-	/**
-	 * 获取可用资源 空间满足需求，状态满足需求，端口满足需求
-	 * 
-	 * @param createObject
-	 * @param resourceList
-	 * @return
-	 */
-	private List<RdsResourcePool> getMasterUsableResource(CreateRDS createObject, List<RdsResourcePool> resourceList) {
-		// for(int i = 0; i < resourceList.size(); i++){
-		List<RdsResourcePool> canUseRes = new LinkedList<RdsResourcePool>();
-		for (RdsResourcePool rp : resourceList) {
-			int canUseExtMemSize = rp.getTotalmemory() - rp.getUsedmemory();
-			if ((RDSCommonConstant.RES_STATUS_USABLE == rp.getStatus()) && (RDSCommonConstant.RES_CYCLE_USABLE == rp.getCycle())
-					&& (canUseExtMemSize > createObject.instanceBase.getDbStoreage())
-					&& ((rp.getCurrentport() + 1) < rp.getMaxport())) {
-				// if((decidedRes.currentport+1) < decidedRes.maxport){
-				canUseRes.add(rp);
-			}
-		}
-		return canUseRes;
-	}
+
+//	/**
+//	 * 获取可用资源 空间满足需求，状态满足需求，端口满足需求
+//	 * 
+//	 * @param createObject
+//	 * @param resourceList
+//	 * @return
+//	 */
+//	private List<RdsResourcePool> getMasterUsableResource(CreateRDS createObject, List<RdsResourcePool> resourceList) {
+//		// for(int i = 0; i < resourceList.size(); i++){
+//		List<RdsResourcePool> canUseRes = new LinkedList<RdsResourcePool>();
+//		for (RdsResourcePool rp : resourceList) {
+//			int canUseExtMemSize = rp.getTotalmemory() - rp.getUsedmemory();
+//			if ((RDSCommonConstant.RES_STATUS_USABLE == rp.getStatus()) && (RDSCommonConstant.RES_CYCLE_USABLE == rp.getCycle())
+//					&& (canUseExtMemSize > createObject.instanceBase.getDbStoreage())
+//					&& ((rp.getCurrentport() + 1) < rp.getMaxport())) {
+//				// if((decidedRes.currentport+1) < decidedRes.maxport){
+//				canUseRes.add(rp);
+//			}
+//		}
+//		return canUseRes;
+//	}
 	/**
 	 * 获取可用资源 空间满足需求，状态满足需求，端口满足需求
 	 * 
@@ -816,7 +949,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	/**
 	 * 传入的栈顶必须是master
 	 * @param instanceStackBack
-	 * @param argmentedExternalStorage 
+	 * @param argmentedExternalStorage 扩充到的容量大小
 	 * @return
 	 */
 	private ResIncPlan ResIncPlanSchemer(Stack<RdsIncBase> instanceStackBack, int argmentedExternalStorage) {
