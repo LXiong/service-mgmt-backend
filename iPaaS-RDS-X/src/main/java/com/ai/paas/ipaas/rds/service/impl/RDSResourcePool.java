@@ -36,7 +36,6 @@ public class RDSResourcePool implements IRDSResourcePool {
 		RdsResourcePool rp = g.getGson().fromJson(getParam, RdsResourcePool.class);
 		RdsResourcePoolMapper rdsResMapper = ServiceUtil.getMapper(RdsResourcePoolMapper.class);
 		rdsResMapper.insert(rp);
-//		resourcePool.save(rp);
 		return "success";
 	}
 

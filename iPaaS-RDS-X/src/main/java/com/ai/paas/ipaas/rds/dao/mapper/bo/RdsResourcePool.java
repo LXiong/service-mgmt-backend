@@ -31,7 +31,68 @@ public class RdsResourcePool {
 
     private Timestamp instancelastupdatetime;
 
-    public Integer getResourceid() {
+    
+    public RdsResourcePool() {
+		super();
+	}
+
+	public RdsResourcePool(Integer resourceid, String hostip, Integer maxport, Integer minport, Integer currentport,
+			Integer cycle, String sshpassword, String sshuser, Integer status, Integer totalmemory, Integer usedmemory,
+			String volumnPath, Timestamp instancecreatetime, Timestamp instancelastupdatetime) {
+		super();
+		this.resourceid = resourceid;
+		this.hostip = hostip;
+		this.maxport = maxport;
+		this.minport = minport;
+		this.currentport = currentport;
+		this.cycle = cycle;
+		this.sshpassword = sshpassword;
+		this.sshuser = sshuser;
+		this.status = status;
+		this.totalmemory = totalmemory;
+		this.usedmemory = usedmemory;
+		this.volumnPath = volumnPath;
+		this.instancecreatetime = instancecreatetime;
+		this.instancelastupdatetime = instancelastupdatetime;
+	}
+
+	public RdsResourcePool(String hostip, Integer maxport, Integer minport, Integer currentport, Integer cycle,
+			String sshpassword, String sshuser, Integer status, Integer totalmemory, Integer usedmemory,
+			String volumnPath, Timestamp instancecreatetime, Timestamp instancelastupdatetime) {
+		super();
+		this.hostip = hostip;
+		this.maxport = maxport;
+		this.minport = minport;
+		this.currentport = currentport;
+		this.cycle = cycle;
+		this.sshpassword = sshpassword;
+		this.sshuser = sshuser;
+		this.status = status;
+		this.totalmemory = totalmemory;
+		this.usedmemory = usedmemory;
+		this.volumnPath = volumnPath;
+		this.instancecreatetime = instancecreatetime;
+		this.instancelastupdatetime = instancelastupdatetime;
+	}
+
+	public RdsResourcePool(String hostip, Integer maxport, Integer minport, Integer currentport, Integer cycle,
+			String sshpassword, String sshuser, Integer status, Integer totalmemory, Integer usedmemory,
+			String volumnPath) {
+		super();
+		this.hostip = hostip;
+		this.maxport = maxport;
+		this.minport = minport;
+		this.currentport = currentport;
+		this.cycle = cycle;
+		this.sshpassword = sshpassword;
+		this.sshuser = sshuser;
+		this.status = status;
+		this.totalmemory = totalmemory;
+		this.usedmemory = usedmemory;
+		this.volumnPath = volumnPath;
+	}
+
+	public Integer getResourceid() {
         return resourceid;
     }
 

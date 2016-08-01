@@ -3,6 +3,7 @@ package com.ai.paas.ipaas.rds.service.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
@@ -38,6 +39,7 @@ import com.ai.paas.ipaas.rds.service.transfer.vo.CreateRDS;
 import com.ai.paas.ipaas.rds.service.transfer.vo.CreateRDSResult;
 import com.ai.paas.ipaas.rds.service.transfer.vo.CreateSRDS;
 import com.ai.paas.ipaas.rds.service.transfer.vo.GetInstanceInfoRDS;
+import com.ai.paas.ipaas.rds.service.transfer.vo.MedthodDescribe;
 import com.ai.paas.ipaas.rds.service.transfer.vo.ModifyRDS;
 import com.ai.paas.ipaas.rds.service.transfer.vo.ModifyRDSResult;
 import com.ai.paas.ipaas.rds.service.transfer.vo.RDSResourcePlan;
@@ -285,11 +287,13 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 					createResult.setStatus(ResponseResultMark.ERROR_NOT_EXIST_USEFUL_RESOURCE);
 					return g.getGson().toJson(createResult);
 				}
+				RdsIncBase batInc = createObject.instanceBase.clone();
+				
 				// 对资源分配后的情况保存到数据库，修改资源池的情况，插入实例信息
-				RdsIncBase batMasterInstance = savePlan(resourceBatMasterPlan, createObject.instanceBase, InstanceType.BATMASTER);
+				RdsIncBase batMasterInstance = savePlan(resourceBatMasterPlan, batInc, InstanceType.BATMASTER);
 				exceptionResPoolList.add(resourceBatMasterPlan.instanceresourcebelonger);
 				// 对需要外键延期保存的数据，单独进行保存（instanceslaver、instancebatmaster）
-				savedRdsIncBase.setBakId(batMasterInstance.getBakId());
+				savedRdsIncBase.setBakId(batMasterInstance.getId() + "");
 				// 保存信息到实例
 				incBaseMapper.updateByPrimaryKey(savedRdsIncBase);
 				// 对实例进行远程配置
@@ -319,15 +323,16 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 						createResult.setStatus(ResponseResultMark.ERROR_NOT_EXIST_USEFUL_RESOURCE);
 						return g.getGson().toJson(createResult);
 					}
+					RdsIncBase slaverInc = createObject.instanceBase.clone();
 					// 对资源分配后的情况保存到数据库，修改资源池的情况，插入实例信息
-					RdsIncBase ib = savePlan(resourceSlaverPlan, createObject.instanceBase, InstanceType.SLAVER);
+					RdsIncBase ib = savePlan(resourceSlaverPlan, slaverInc, InstanceType.SLAVER);
 					
 					exceptionResPoolList.add(resourceSlaverPlan.instanceresourcebelonger);
 					// 对需要外键延期保存的数据，单独进行保存（instanceslaver、instancebatmaster）
-					if(savedRdsIncBase.getSlaverId().isEmpty()){
+					if(savedRdsIncBase.getSlaverId().isEmpty() || savedRdsIncBase.getSlaverId().equals("") || savedRdsIncBase.getSlaverId() == null){
 						savedRdsIncBase.setSlaverId(ib.getId() + "");
 					}else{
-						savedRdsIncBase.setSlaverId("|" + ib.getId());
+						savedRdsIncBase.setSlaverId(savedRdsIncBase.getId() + "|" + ib.getId());
 					}
 					incBaseMapper.updateByPrimaryKey(savedRdsIncBase);
 					// 对实例进行远程配置
@@ -486,6 +491,9 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		 * container-name
 		 * server-id
 		 * dbStorage
+		 * 
+		 * {user_id}-{service_id}-{port}
+		 * instanceType
 		 */
 		case InstanceType.MASTER:
 			String basePath = AgentUtil.getAgentFilePath(AidUtil.getAid());
@@ -548,6 +556,9 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			 * container-name
 			 * server-id
 			 * dbStorage
+			 * 
+			 * {user_id}-{service_id}-{port}
+			 * instanceType
 			 */
 		case InstanceType.SLAVER:
 			String basePath_s = AgentUtil.getAgentFilePath(AidUtil.getAid());
@@ -609,6 +620,9 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			 * container-name
 			 * server-id
 			 * dbStorage
+			 * 
+			 * {user_id}-{service_id}-{port}
+			 * instanceType
 			 */
 		case InstanceType.BATMASTER:
 			String basePath_b = AgentUtil.getAgentFilePath(AidUtil.getAid());
@@ -659,7 +673,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		}
 		
 		
-		
+//		return true;
 		
 	}
 
@@ -863,13 +877,13 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		instanceBase.setIncIp(resourcePlan.ip);
 		instanceBase.setIncPort(resourcePlan.port);
 		instanceBase.setIncStatus(resourcePlan.Status);
-		
+		instanceBase.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 		
 		// 保存实例
 		RdsIncBaseMapper resMapper = ServiceUtil.getMapper(RdsIncBaseMapper.class);
 		resMapper.insert(instanceBase);
 		RdsIncBaseCriteria cri = new RdsIncBaseCriteria();
-		cri.createCriteria().andContainerNameEqualTo(instanceBase.getContainerName()).andIncIpEqualTo(instanceBase.getIncIp()).andIncPortEqualTo(instanceBase.getIncPort());
+		cri.createCriteria().andIncNameEqualTo(instanceBase.getIncName()).andIncTypeEqualTo(instanceBase.getIncType()).andIncIpEqualTo(instanceBase.getIncIp()).andIncPortEqualTo(instanceBase.getIncPort());
 		// 刚出炉的数据
 		instanceBase = resMapper.selectByExample(cri).get(0);
 		// 更新资源
@@ -978,9 +992,15 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 */
 	@Override
 	public String getFuncList() {
-		
+		List<MedthodDescribe> list = new LinkedList<MedthodDescribe>();
 		Method[] methodList = RDSInstanceManager.class.getMethods();
-		return g.getGson().toJson(methodList);
+		for(Method m : methodList){
+			MedthodDescribe md = new MedthodDescribe();
+			md.methodName = m.getName();
+			md.methodReturnType = m.getReturnType().getName();
+			list.add(md);
+		}
+		return g.getGson().toJson(list);
 	}
 
 	@Override
@@ -1149,10 +1169,11 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	
 	private void save2ZK(RdsIncBase instanceRDS) {
 		CCSComponentOperationParam op = new CCSComponentOperationParam();
+		System.out.println("save2ZK");
 		op.setUserId(instanceRDS.getUserId());
 		op.setPath(RDSCommonConstant.RDS_ZK_PATH + instanceRDS.getServiceId());
 		op.setPathType(PathType.READONLY);
-		
+		System.out.println(op);
 		try {
 			iCCSComponentManageSv.add(op, g.getGson().toJson(instanceRDS));
 		} catch (PaasException e) {
