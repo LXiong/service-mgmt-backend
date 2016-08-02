@@ -28,11 +28,11 @@ public class TestRdsDubbo {
 	private IRDSResourcePool resMananger;
 	
 	Gson g = new Gson();
-	@Test
-	public void getFuncList() {
-		String funcList = incManager.getFuncList();
-		System.out.println(funcList);
-	}
+//	@Test
+//	public void getFuncList() {
+//		String funcList = incManager.getFuncList();
+//		System.out.println(funcList);
+//	}
 	
 //	pass
 //	@Test

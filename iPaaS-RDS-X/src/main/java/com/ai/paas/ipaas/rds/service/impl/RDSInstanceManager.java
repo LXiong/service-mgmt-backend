@@ -459,13 +459,15 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	}
 
 	
-
+	/**
+	 * 修改的位置有静态string中和代码中两部分
+	 * /
 	/** ansible hosts */
 	public static final String CREATE_ANSIBLE_HOSTS = "rds/init_ansible_ssh_hosts.sh {0} {1} {2}";
 	/** 图片服务器 */
-	public static final String DOCKER_MASTER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
+	public static final String DOCKER_MASTER_PARAM = "rds/ansible_master_run_image.sh {0} {1} {2} "
 			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13}";
-	public static final String DOCKER_SLAVER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
+	public static final String DOCKER_SLAVER_PARAM = "rds/ansible_slaver_run_image.sh {0} {1} {2} "
 			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}";
 	public static final String DOCKER_BATMASTER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
 			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}";
@@ -526,6 +528,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		case InstanceType.MASTER:
 			String basePath = AgentUtil.getAgentFilePath(AidUtil.getAid());
 			String rdsPath = basePath + "rds";
+			LOG.debug("---------rdsPath {}----------", rdsPath);
 			// 1.先将需要执行镜像命令的机器配置文件上传上去。
 			InputStream in = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/init_ansible_ssh_hosts.sh");
 			String[] cnt = AgentUtil.readFileLines(in);
