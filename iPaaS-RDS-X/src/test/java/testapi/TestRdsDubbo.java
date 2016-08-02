@@ -34,54 +34,65 @@ public class TestRdsDubbo {
 		System.out.println(funcList);
 	}
 	
+//	pass
 //	@Test
 //	public void addRes(){
 //		
 //		Timestamp time = new Timestamp(System.currentTimeMillis()); 
-//		RdsResourcePool rdsRes = new  RdsResourcePool("192.168.1.125",50000,5000,5001,1,"hbhb123","hbhb123",1,2000000,20,"/home",time,time);
+////		RdsResourcePool rdsRes = new  RdsResourcePool("192.168.1.125",50000,5000,5001,1,"hbhb123","hbhb123",1,2000000,20,"/home",time,time);
+//		RdsResourcePool rdsRes = new  RdsResourcePool("10.1.245.226",50000,5000,5001,1,"root","123456",1,2000000,20,"percona_volumn/data",time,time);
 //		String request = g.toJson(rdsRes);
 //		System.out.println(request);
 //		String result = resMananger.add(request);
 //		System.out.println(result);
 //	}
-	
+
+//	pass
 //	@Test
 //	public void deleteRes(){
 //		
-//		Timestamp currenttime = new Timestamp(System.currentTimeMillis()); 
 //		RdsResourcePool rdsRes = new  RdsResourcePool();
 //		rdsRes.setResourceid(1);
 //		String request = g.toJson(rdsRes);
 //		System.out.println(request);
-//		String result = resMananger.add(request);
+//		String result = resMananger.delete(request);
 //		System.out.println(result);
 //	}
-	
+
+//	pass
 	@Test
 	public void create(){
 		Timestamp time = new Timestamp(System.currentTimeMillis()); 
 		CreateRDS creatObject = new CreateRDS();
-		creatObject.createSlaverNum = 2;
-		creatObject.createBatmasterNum = 1;
+		creatObject.createSlaverNum = 0;
+		creatObject.createBatmasterNum = 0;
 		creatObject.token = "2FJ3847FQ23UH923RHJDSFH";
 		// user_id对应ccs_user_config中的用户
-		creatObject.instanceBase = new RdsIncBase("00B66CF322E84539942FCCDEC9B25132", "jwiejvoq", "BIU", 5, 2, "","", "mysql5", "", 0, 1, "BIU,MYSQL,TEST",
-				"BEIJING", 1, "no describe", "/mysql", "/mysql/data","/home", "192.168.*.*", "root", "root", "containerName",
-				"J8J439FSFH34", 50000, 2000, 123, 500,time,time);
+		creatObject.instanceBase = new RdsIncBase("00B66CF322E84539942FCCDEC9B25132", "mysql_for_docker", "BIU", 5, 100, "","",
+				"mysql5", "", 0, 1, "BIU,MYSQL,TEST",
+				"BEIJING", 1, "no describe", "/aifs01", 
+				"/aifs01/mysqldata","", "192.168.*.*", 
+				"root", "root", "containerName",
+				"34", 50000, 2000, 123, 500,time,time);
 		String request = g.toJson(creatObject);
 		System.out.println(request);
 		String result = incManager.create(request);
 		System.out.println(result);
 	}
-	
+
+//	pass
 //	@Test
 //	public void cancel(){
-//		Timestamp time = new Timestamp(System.currentTimeMillis()); 
 //		CancelRDS cancelObject = new CancelRDS();
+//		cancelObject.user_id = "X";
+//		cancelObject.token = "X";
+//		cancelObject.instanceid = 21;
 //		String request = g.toJson(cancelObject);
 //		System.out.println(request);
-//		String result = incManager.create(request);
+//		String result = incManager.cancel(request);
 //		System.out.println(result);
 //	}
+	
+
 	
 }

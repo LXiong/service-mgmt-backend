@@ -13,6 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.http.client.ClientProtocolException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,8 @@ import com.ai.paas.ipaas.PaasException;
 import com.ai.paas.ipaas.ServiceUtil;
 import com.ai.paas.ipaas.agent.util.AgentUtil;
 import com.ai.paas.ipaas.agent.util.AidUtil;
+import com.ai.paas.ipaas.base.dao.interfaces.IpaasImageResourceMapper;
+import com.ai.paas.ipaas.base.dao.mapper.bo.IpaasImageResource;
 import com.ai.paas.ipaas.ccs.constants.ConfigCenterDubboConstants.PathType;
 import com.ai.paas.ipaas.ccs.service.ICCSComponentManageSv;
 import com.ai.paas.ipaas.ccs.service.dto.CCSComponentOperationParam;
@@ -66,6 +70,8 @@ import com.alibaba.dubbo.config.annotation.Service;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class RDSInstanceManager implements IRDSInstanceManager {
+	
+	private static transient final Logger LOG = LoggerFactory.getLogger(RDSInstanceManager.class);
 
 	@Autowired
 	GsonSingleton g;
@@ -152,10 +158,12 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	
 
 	private List<Integer> getIdArrayFromString(String bakId) {
-		String[] idArray = bakId.split("|");
+		// 如果使用split作为分隔符，则
+		String[] idArray = bakId.split("\\|");
 		ArrayList<Integer> idList = new ArrayList<Integer>();
 		for(int i = 0; i < idArray.length; i++){
-			idList.add(Integer.valueOf(idArray[i]));
+			if(idArray[i] != null && !idArray[i].isEmpty() && !idArray[i].equals(""))
+				idList.add(Integer.valueOf(idArray[i]));
 		}
 		return idList;
 	}
@@ -287,10 +295,10 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 					createResult.setStatus(ResponseResultMark.ERROR_NOT_EXIST_USEFUL_RESOURCE);
 					return g.getGson().toJson(createResult);
 				}
-				RdsIncBase batInc = createObject.instanceBase.clone();
-				
+				RdsIncBase batInCopy = savedRdsIncBase.clone();
+				batInCopy.setMasterid(savedRdsIncBase.getId());
 				// 对资源分配后的情况保存到数据库，修改资源池的情况，插入实例信息
-				RdsIncBase batMasterInstance = savePlan(resourceBatMasterPlan, batInc, InstanceType.BATMASTER);
+				RdsIncBase batMasterInstance = savePlan(resourceBatMasterPlan, batInCopy, InstanceType.BATMASTER);
 				exceptionResPoolList.add(resourceBatMasterPlan.instanceresourcebelonger);
 				// 对需要外键延期保存的数据，单独进行保存（instanceslaver、instancebatmaster）
 				savedRdsIncBase.setBakId(batMasterInstance.getId() + "");
@@ -323,16 +331,17 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 						createResult.setStatus(ResponseResultMark.ERROR_NOT_EXIST_USEFUL_RESOURCE);
 						return g.getGson().toJson(createResult);
 					}
-					RdsIncBase slaverInc = createObject.instanceBase.clone();
+					RdsIncBase slaInCopy = savedRdsIncBase.clone();
+					slaInCopy.setMasterid(savedRdsIncBase.getId());
 					// 对资源分配后的情况保存到数据库，修改资源池的情况，插入实例信息
-					RdsIncBase ib = savePlan(resourceSlaverPlan, slaverInc, InstanceType.SLAVER);
+					RdsIncBase ib = savePlan(resourceSlaverPlan, slaInCopy, InstanceType.SLAVER);
 					
 					exceptionResPoolList.add(resourceSlaverPlan.instanceresourcebelonger);
 					// 对需要外键延期保存的数据，单独进行保存（instanceslaver、instancebatmaster）
 					if(savedRdsIncBase.getSlaverId().isEmpty() || savedRdsIncBase.getSlaverId().equals("") || savedRdsIncBase.getSlaverId() == null){
 						savedRdsIncBase.setSlaverId(ib.getId() + "");
 					}else{
-						savedRdsIncBase.setSlaverId(savedRdsIncBase.getId() + "|" + ib.getId());
+						savedRdsIncBase.setSlaverId(savedRdsIncBase.getSlaverId() + "|" + ib.getId());
 					}
 					incBaseMapper.updateByPrimaryKey(savedRdsIncBase);
 					// 对实例进行远程配置
@@ -387,8 +396,10 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		RdsResourcePoolCriteria cri = new RdsResourcePoolCriteria();
 		cri.createCriteria().andCurrentportBetween(0, 100000);
 		List<RdsResourcePool> allRes = resPoolMapper.selectByExample(cri);
+		RdsIncBase masterCopy = masterInstance.clone();
+		masterCopy.setMasterid(createObject.masterinstanceid);
 		// 查询资源情况，根据请求情况与资源情况获取分配计划
-		RDSResourcePlan resourceBatMasterPlan = getExpectResourcePlan(masterInstance, allRes, exceptResourceResourceList);
+		RDSResourcePlan resourceBatMasterPlan = getExpectResourcePlan(masterCopy, allRes, exceptResourceResourceList);
 		if(null == resourceBatMasterPlan.instanceresourcebelonger){
 			createResult.setStatus(ResponseResultMark.ERROR_NOT_EXIST_USEFUL_RESOURCE);
 			return g.getGson().toJson(createResult);
@@ -402,14 +413,14 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			createResult.setStatus(ResponseResultMark.ERROR_CANNOT__CREATE_MASTER_IN_THIS_METHOD);
 			return g.getGson().toJson(createResult);
 		case InstanceType.BATMASTER:
-			masterInstance.setBakId(saveRdsIncBase.getBakId());
+			masterInstance.setBakId(saveRdsIncBase.getId() + "");
 			incBaseMapper.updateByPrimaryKey(masterInstance);
 			break;
 		case InstanceType.SLAVER:
 			if(masterInstance.getSlaverId().isEmpty()){
 				masterInstance.setSlaverId(saveRdsIncBase.getId() + "");
 			}else{
-				masterInstance.setSlaverId("|" + saveRdsIncBase.getId());
+				masterInstance.setSlaverId(masterInstance.getServiceId() + "|" + saveRdsIncBase.getId());
 			}
 			incBaseMapper.updateByPrimaryKey(masterInstance);
 			break;
@@ -452,9 +463,12 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	/** ansible hosts */
 	public static final String CREATE_ANSIBLE_HOSTS = "rds/init_ansible_ssh_hosts.sh {0} {1} {2}";
 	/** 图片服务器 */
-	public static final String DOCKER_4_GM_AND_TOMCAT = "rds/ansible_run_image.sh {1} {2} "
-			+ "{3} {4} {5} {6} {7} {8} {9} ";
-
+	public static final String DOCKER_MASTER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14}";
+	public static final String DOCKER_SLAVER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}";
+	public static final String DOCKER_BATMASTER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}";
 	public static String fillStringByArgs(String str, String[] arr) {
 		Matcher m = Pattern.compile("\\{(\\d+)\\}").matcher(str);
 		while (m.find()) {
@@ -475,28 +489,42 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 */
 	private boolean InstanceConfig(RdsIncBase savedRdsIncBase)
 			throws ClientProtocolException, IOException, PaasException {
+		RdsIncBaseMapper incBaseMapper = ServiceUtil.getMapper(RdsIncBaseMapper.class);
+		RdsIncBase masterInc = null;
+		RdsResourcePoolMapper resPoolMapper = ServiceUtil.getMapper(RdsResourcePoolMapper.class);
+		RdsResourcePool incRes = resPoolMapper.selectByPrimaryKey(savedRdsIncBase.getResId());
+		IpaasImageResourceMapper imgResMapper = ServiceUtil.getMapper(IpaasImageResourceMapper.class);
+		IpaasImageResource imgRes = imgResMapper.selectByPrimaryKey(savedRdsIncBase.getImgId());
+		if(savedRdsIncBase.getIncType().intValue() > 1 ){
+			if(savedRdsIncBase.getMasterid() > 0){
+				masterInc = incBaseMapper.selectByPrimaryKey(savedRdsIncBase.getMasterid());
+			}else{
+				return false;
+			}
+		}
 		switch(savedRdsIncBase.getIncType()){
 		/**
 		 * filename
 		 * sshuser
-		 * sshpassword
+		 * sshpassword		
+		 * image?
 		 * ip
 		 * port
-		 * image?
-		 * datapath:?(mysqlVolumnPath)
+		 * datapath
 		 * homepath
+		 * (mysqlVolumnPath)
+		 * container-name {user_id}-{service_id}-{port}
+		 * server-id
+		 * dbStorage
+		 * instanceType
+		 * path?与sshhost命令中的第一个参数对应
 		 * !whitelist
 		 * !slaver_name
 		 * !slaver_password
-		 * container-name
-		 * server-id
-		 * dbStorage
-		 * 
-		 * {user_id}-{service_id}-{port}
-		 * instanceType
 		 */
 		case InstanceType.MASTER:
 			String basePath = AgentUtil.getAgentFilePath(AidUtil.getAid());
+			String rdsPath = basePath + "rds";
 			// 1.先将需要执行镜像命令的机器配置文件上传上去。
 			InputStream in = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/init_ansible_ssh_hosts.sh");
 			String[] cnt = AgentUtil.readFileLines(in);
@@ -506,168 +534,189 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 
 			// 2.执行这个初始化命令
 			String mkSshHosts = fillStringByArgs(CREATE_ANSIBLE_HOSTS,
-					new String[] { basePath + "rds", savedRdsIncBase.getIncIp().replace(".", ""),
+					new String[] { rdsPath, 
+							savedRdsIncBase.getIncIp().replace(".", ""),
 							savedRdsIncBase.getIncIp() });
-			// LOG.debug("---------mkSshHosts {}----------", mkSshHosts);
+			LOG.debug("---------mkSshHosts {}----------", mkSshHosts);
 			AgentUtil.executeCommand(basePath + mkSshHosts, AidUtil.getAid());
 
-			in = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/rdsimage.yml");
+			in = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/rdsimage_master.yml");
 			cnt = AgentUtil.readFileLines(in);
 			in.close();
-			AgentUtil.uploadFile("rds/rdsimage.yml", cnt, AidUtil.getAid());
+			AgentUtil.uploadFile("rds/rdsimage_master.yml", cnt, AidUtil.getAid());
 
 			// 还得上传文件
-			in = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/ansible_run_image.sh");
+			in = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/ansible_master_run_image.sh");
 			cnt = AgentUtil.readFileLines(in);
 			in.close();
-			AgentUtil.uploadFile("rds/ansible_run_image.sh", cnt, AidUtil.getAid());
-			AgentUtil.executeCommand("chmod +x " + basePath + "rds/ansible_run_image.sh", AidUtil.getAid());
+			AgentUtil.uploadFile("rds/ansible_master_run_image.sh", cnt, AidUtil.getAid());
+			AgentUtil.executeCommand("chmod +x " + basePath + "rds/ansible_master_run_image.sh", AidUtil.getAid());
 			// 开始执行
-			String runImage = fillStringByArgs(DOCKER_4_GM_AND_TOMCAT,
-					new String[] { ""
-//							, 
-//							savedRdsIncBase.instanceipport.instanceIp.replace(".", ""),
-//							savedRdsIncBase.instanceresourcebelonger.getSshUser(),
-//							savedRdsIncBase.instanceresourcebelonger.getSshPassword(),
-//							savedRdsIncBase.instanceipport.getInstanceIp(),
-//							savedRdsIncBase.instanceimagebelonger.image_repository + "/" + savedRdsIncBase.instanceimagebelonger.image_name,
-//							savedRdsIncBase.instanceipport.getPort() + "",
-//							savedRdsIncBase.instancebaseconfig.instanceDataPath,
-//							savedRdsIncBase.instancebaseconfig.instanceHomePath, basePath + "rds" 
-							});
+			String runImage = fillStringByArgs(DOCKER_MASTER_PARAM,
+					new String[] { rdsPath, 
+							savedRdsIncBase.getIncIp().replace(".", ""),// .cfg 文件名称 
+							incRes.getSshuser(),
+							incRes.getSshpassword(),
+							savedRdsIncBase.getIncIp(),
+							imgRes.getImageRepository() + "/" + imgRes.getImageName(),
+							savedRdsIncBase.getIncPort() + "",
+							savedRdsIncBase.getMysqlDataHome(),
+							savedRdsIncBase.getMysqlHome(),
+							incRes.getVolumnPath(),
+							savedRdsIncBase.getUserId() + "-" + savedRdsIncBase.getServiceId() + "-" + savedRdsIncBase.getIncPort(),
+							savedRdsIncBase.getDbServerId(),
+							savedRdsIncBase.getDbStoreage() + "",
+							savedRdsIncBase.getIncType() + ""});
 
-			// LOG.debug("---------runImage {}----------", runImage);
+			LOG.debug("---------runImage {}----------", runImage);
 			AgentUtil.executeCommand(basePath + runImage, AidUtil.getAid());
 
-			return false;
+			return true;
 			/**
 			 * filename
 			 * sshuser
-			 * sshpassword
+			 * sshpassword		
+			 * image?
 			 * ip
 			 * port
-			 * master-ip
-			 * master-port
-			 * image?
-			 * datapath:?(mysqlVolumnPath)
+			 * datapath
 			 * homepath
-			 * root_name
-			 * root_password
-			 * container-name
+			 * (mysqlVolumnPath)
+			 * container-name {user_id}-{service_id}-{port}
 			 * server-id
 			 * dbStorage
-			 * 
-			 * {user_id}-{service_id}-{port}
 			 * instanceType
-			 */
-		case InstanceType.SLAVER:
-			String basePath_s = AgentUtil.getAgentFilePath(AidUtil.getAid());
-			// 1.先将需要执行镜像命令的机器配置文件上传上去。
-			InputStream in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/init_ansible_ssh_hosts.sh");
-			String[] cnt_s = AgentUtil.readFileLines(in_s);
-			in_s.close();
-			AgentUtil.uploadFile("rds/init_ansible_ssh_hosts.sh", cnt_s, AidUtil.getAid());
-			AgentUtil.executeCommand("chmod +x " + basePath_s + "rds/init_ansible_ssh_hosts.sh", AidUtil.getAid());
-
-			// 2.执行这个初始化命令
-			String mkSshHosts_s = fillStringByArgs(CREATE_ANSIBLE_HOSTS,
-					new String[] { basePath_s + "rds", savedRdsIncBase.getIncIp().replace(".", ""),
-							savedRdsIncBase.getIncIp() });
-			// LOG.debug("---------mkSshHosts {}----------", mkSshHosts);
-			AgentUtil.executeCommand(basePath_s + mkSshHosts_s, AidUtil.getAid());
-
-			in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/rdsimage.yml");
-			cnt_s = AgentUtil.readFileLines(in_s);
-			in_s.close();
-			AgentUtil.uploadFile("rds/rdsimage.yml", cnt_s, AidUtil.getAid());
-
-			// 还得上传文件
-			in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/ansible_run_image.sh");
-			cnt_s = AgentUtil.readFileLines(in_s);
-			in_s.close();
-			AgentUtil.uploadFile("rds/ansible_run_image.sh", cnt_s, AidUtil.getAid());
-			AgentUtil.executeCommand("chmod +x " + basePath_s + "rds/ansible_run_image.sh", AidUtil.getAid());
-			// 开始执行
-			String runImage_s = fillStringByArgs(DOCKER_4_GM_AND_TOMCAT,
-					new String[] { ""
-//							, 
-//							savedRdsIncBase.instanceipport.instanceIp.replace(".", ""),
-//							savedRdsIncBase.instanceresourcebelonger.getSshUser(),
-//							savedRdsIncBase.instanceresourcebelonger.getSshPassword(),
-//							savedRdsIncBase.instanceipport.getInstanceIp(),
-//							savedRdsIncBase.instanceimagebelonger.image_repository + "/" + savedRdsIncBase.instanceimagebelonger.image_name,
-//							savedRdsIncBase.instanceipport.getPort() + "",
-//							savedRdsIncBase.instancebaseconfig.instanceDataPath,
-//							savedRdsIncBase.instancebaseconfig.instanceHomePath, basePath + "rds" 
-							});
-
-			// LOG.debug("---------runImage {}----------", runImage);
-			AgentUtil.executeCommand(basePath_s + runImage_s, AidUtil.getAid());
-			return false;
-			/**
-			 * filename
-			 * sshuser
-			 * sshpassword
-			 * ip
-			 * port
-			 * master-ip
-			 * master-port
-			 * image?
-			 * datapath:?(mysqlVolumnPath)
-			 * homepath
-			 * root_name
-			 * root_password
-			 * container-name
-			 * server-id
-			 * dbStorage
+			 * path?与sshhost命令中的第一个参数对应
+			 * masterip
+			 * masterport
 			 * 
-			 * {user_id}-{service_id}-{port}
-			 * instanceType
+			 * !whitelist
+			 * !slaver_name
+			 * !slaver_password
 			 */
-		case InstanceType.BATMASTER:
-			String basePath_b = AgentUtil.getAgentFilePath(AidUtil.getAid());
-			// 1.先将需要执行镜像命令的机器配置文件上传上去。
-			InputStream in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/init_ansible_ssh_hosts.sh");
-			String[] cnt_b = AgentUtil.readFileLines(in_b);
-			in_b.close();
-			AgentUtil.uploadFile("rds/init_ansible_ssh_hosts.sh", cnt_b, AidUtil.getAid());
-			AgentUtil.executeCommand("chmod +x " + basePath_b + "rds/init_ansible_ssh_hosts.sh", AidUtil.getAid());
+			case InstanceType.SLAVER:
+				String basePath_s = AgentUtil.getAgentFilePath(AidUtil.getAid());
+				String rdsPath_s = basePath_s + "rds";
+				// 1.先将需要执行镜像命令的机器配置文件上传上去。
+				InputStream in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/init_ansible_ssh_hosts.sh");
+				String[] cnt_s = AgentUtil.readFileLines(in_s);
+				in_s.close();
+				AgentUtil.uploadFile("rds/init_ansible_ssh_hosts.sh", cnt_s, AidUtil.getAid());
+				AgentUtil.executeCommand("chmod +x " + basePath_s + "rds/init_ansible_ssh_hosts.sh", AidUtil.getAid());
 
-			// 2.执行这个初始化命令
-			String mkSshHosts_b = fillStringByArgs(CREATE_ANSIBLE_HOSTS,
-					new String[] { basePath_b + "rds", savedRdsIncBase.getIncIp().replace(".", ""),
-							savedRdsIncBase.getIncIp() });
-			// LOG.debug("---------mkSshHosts {}----------", mkSshHosts);
-			AgentUtil.executeCommand(basePath_b + mkSshHosts_b, AidUtil.getAid());
+				// 2.执行这个初始化命令
+				String mkSshHosts_s = fillStringByArgs(CREATE_ANSIBLE_HOSTS,
+						new String[] { rdsPath_s, 
+								savedRdsIncBase.getIncIp().replace(".", ""),
+								savedRdsIncBase.getIncIp() });
+				LOG.debug("---------mkSshHosts {}----------", mkSshHosts_s);
+				AgentUtil.executeCommand(basePath_s + mkSshHosts_s, AidUtil.getAid());
 
-			in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/rdsimage.yml");
-			cnt_b = AgentUtil.readFileLines(in_b);
-			in_b.close();
-			AgentUtil.uploadFile("rds/rdsimage.yml", cnt_b, AidUtil.getAid());
+				in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/rdsimage_slaver.yml");
+				cnt_s = AgentUtil.readFileLines(in_s);
+				in_s.close();
+				AgentUtil.uploadFile("rds/rdsimage_slaver.yml", cnt_s, AidUtil.getAid());
 
-			// 还得上传文件
-			in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/ansible_run_image.sh");
-			cnt_b = AgentUtil.readFileLines(in_b);
-			in_b.close();
-			AgentUtil.uploadFile("rds/ansible_run_image.sh", cnt_b, AidUtil.getAid());
-			AgentUtil.executeCommand("chmod +x " + basePath_b + "rds/ansible_run_image.sh", AidUtil.getAid());
-			// 开始执行
-			String runImage_b = fillStringByArgs(DOCKER_4_GM_AND_TOMCAT,
-					new String[] { ""
-//							, 
-//							savedRdsIncBase.instanceipport.instanceIp.replace(".", ""),
-//							savedRdsIncBase.instanceresourcebelonger.getSshUser(),
-//							savedRdsIncBase.instanceresourcebelonger.getSshPassword(),
-//							savedRdsIncBase.instanceipport.getInstanceIp(),
-//							savedRdsIncBase.instanceimagebelonger.image_repository + "/" + savedRdsIncBase.instanceimagebelonger.image_name,
-//							savedRdsIncBase.instanceipport.getPort() + "",
-//							savedRdsIncBase.instancebaseconfig.instanceDataPath,
-//							savedRdsIncBase.instancebaseconfig.instanceHomePath, basePath + "rds" 
-							});
+				// 还得上传文件
+				in_s = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/ansible_slaver_run_image.sh");
+				cnt_s = AgentUtil.readFileLines(in_s);
+				in_s.close();
+				AgentUtil.uploadFile("rds/ansible_slaver_run_image.sh", cnt_s, AidUtil.getAid());
+				AgentUtil.executeCommand("chmod +x " + basePath_s + "rds/ansible_slaver_run_image.sh", AidUtil.getAid());
+				// 开始执行
+				String runImage_s = fillStringByArgs(DOCKER_SLAVER_PARAM,
+						new String[] { rdsPath_s, 
+								savedRdsIncBase.getIncIp().replace(".", ""),
+								incRes.getSshuser(),
+								incRes.getSshpassword(),
+								imgRes.getImageRepository() + "/" + imgRes.getImageName(),
+								savedRdsIncBase.getIncIp(),
+								savedRdsIncBase.getIncPort() + "",
+								savedRdsIncBase.getMysqlDataHome(),
+								savedRdsIncBase.getMysqlHome(),
+								incRes.getVolumnPath(),
+								savedRdsIncBase.getUserId() + "-" + savedRdsIncBase.getServiceId() + "-" + savedRdsIncBase.getIncPort(),
+								savedRdsIncBase.getDbServerId(),
+								savedRdsIncBase.getDbStoreage() + "",
+								savedRdsIncBase.getIncType() + "",
+								masterInc.getIncIp(),
+								masterInc.getIncPort() + ""});
 
-			// LOG.debug("---------runImage {}----------", runImage);
-			AgentUtil.executeCommand(basePath_b + runImage_b, AidUtil.getAid());
-			return false;
+				LOG.debug("---------runImage {}----------", runImage_s);
+				AgentUtil.executeCommand(basePath_s + runImage_s, AidUtil.getAid());
+
+				return true;
+				/**
+				 * filename
+				 * sshuser
+				 * sshpassword		
+				 * image?
+				 * ip
+				 * port
+				 * datapath
+				 * homepath
+				 * (mysqlVolumnPath)
+				 * container-name {user_id}-{service_id}-{port}
+				 * server-id
+				 * dbStorage
+				 * instanceType
+				 * path?与sshhost命令中的第一个参数对应
+				 * !whitelist
+				 * !slaver_name
+				 * !slaver_password
+				 */
+				case InstanceType.BATMASTER:
+					String basePath_b = AgentUtil.getAgentFilePath(AidUtil.getAid());
+					String rdsPath_b = basePath_b + "rds";
+					// 1.先将需要执行镜像命令的机器配置文件上传上去。
+					InputStream in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/init_ansible_ssh_hosts.sh");
+					String[] cnt_b = AgentUtil.readFileLines(in_b);
+					in_b.close();
+					AgentUtil.uploadFile("rds/init_ansible_ssh_hosts.sh", cnt_b, AidUtil.getAid());
+					AgentUtil.executeCommand("chmod +x " + basePath_b + "rds/init_ansible_ssh_hosts.sh", AidUtil.getAid());
+
+					// 2.执行这个初始化命令
+					String mkSshHosts_b = fillStringByArgs(CREATE_ANSIBLE_HOSTS,
+							new String[] { rdsPath_b, 
+									savedRdsIncBase.getIncIp().replace(".", ""),
+									savedRdsIncBase.getIncIp() });
+					LOG.debug("---------mkSshHosts {}----------", mkSshHosts_b);
+					AgentUtil.executeCommand(basePath_b + mkSshHosts_b, AidUtil.getAid());
+
+					in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/rdsimage.yml");
+					cnt_b = AgentUtil.readFileLines(in_b);
+					in_b.close();
+					AgentUtil.uploadFile("rds/rdsimage.yml", cnt_b, AidUtil.getAid());
+
+					// 还得上传文件
+					in_b = RDSInstanceManager.class.getResourceAsStream("/playbook/rds/ansible_run_image.sh");
+					cnt_b = AgentUtil.readFileLines(in_b);
+					in_b.close();
+					AgentUtil.uploadFile("rds/ansible_run_image.sh", cnt_b, AidUtil.getAid());
+					AgentUtil.executeCommand("chmod +x " + basePath_b + "rds/ansible_run_image.sh", AidUtil.getAid());
+					// 开始执行
+					String runImage_b = fillStringByArgs(DOCKER_BATMASTER_PARAM,
+							new String[] { rdsPath_b, 
+									savedRdsIncBase.getIncIp().replace(".", ""),
+									incRes.getSshuser(),
+									incRes.getSshpassword(),
+									imgRes.getImageRepository() + "/" + imgRes.getImageName(),
+									savedRdsIncBase.getIncIp(),
+									savedRdsIncBase.getIncPort() + "",
+									savedRdsIncBase.getMysqlDataHome(),
+									savedRdsIncBase.getMysqlHome(),
+									incRes.getVolumnPath(),
+									savedRdsIncBase.getUserId() + "-" + savedRdsIncBase.getServiceId() + "-" + savedRdsIncBase.getIncPort(),
+									savedRdsIncBase.getDbServerId(),
+									savedRdsIncBase.getDbStoreage() + "",
+									savedRdsIncBase.getIncType() + "",
+									masterInc.getIncIp(),
+									masterInc.getIncPort() + ""});
+
+					LOG.debug("---------runImage {}----------", runImage_b);
+					AgentUtil.executeCommand(basePath_b + runImage_b, AidUtil.getAid());
+
+					return true;
 		default:
 			return false;
 		}
@@ -854,6 +903,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 
 
 	/**
+	 * WARNING!!!只能传入对象的拷贝！
 	 * 当前存储字段有
 	 * 
 	 * @param resourcePlan
@@ -863,6 +913,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 */
 	private RdsIncBase savePlan(RDSResourcePlan resourcePlan, RdsIncBase instanceBase,int RdsIncBaseNetworkType) {
 //		RdsIncBase instanceBase = createObject.instanceBase;
+		instanceBase.setId(null);
+		
 		instanceBase.setIncType(RdsIncBaseNetworkType);
 		if(RdsIncBaseNetworkType == InstanceType.BATMASTER){
 			instanceBase.setIncName(instanceBase.getIncName() + "-BATMASTER-" + Math.random());
@@ -877,6 +929,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		instanceBase.setIncIp(resourcePlan.ip);
 		instanceBase.setIncPort(resourcePlan.port);
 		instanceBase.setIncStatus(resourcePlan.Status);
+		instanceBase.setMysqlVolumnPath(resourcePlan.instanceresourcebelonger.getVolumnPath());
 		instanceBase.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 		
 		// 保存实例

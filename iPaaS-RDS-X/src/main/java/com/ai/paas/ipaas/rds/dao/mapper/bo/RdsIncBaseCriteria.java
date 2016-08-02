@@ -1985,6 +1985,66 @@ public class RdsIncBaseCriteria {
             return (Criteria) this;
         }
 
+        public Criteria andMasteridIsNull() {
+            addCriterion("masterid is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridIsNotNull() {
+            addCriterion("masterid is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridEqualTo(Integer value) {
+            addCriterion("masterid =", value, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridNotEqualTo(Integer value) {
+            addCriterion("masterid <>", value, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridGreaterThan(Integer value) {
+            addCriterion("masterid >", value, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridGreaterThanOrEqualTo(Integer value) {
+            addCriterion("masterid >=", value, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridLessThan(Integer value) {
+            addCriterion("masterid <", value, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridLessThanOrEqualTo(Integer value) {
+            addCriterion("masterid <=", value, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridIn(List<Integer> values) {
+            addCriterion("masterid in", values, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridNotIn(List<Integer> values) {
+            addCriterion("masterid not in", values, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridBetween(Integer value1, Integer value2) {
+            addCriterion("masterid between", value1, value2, "masterid");
+            return (Criteria) this;
+        }
+
+        public Criteria andMasteridNotBetween(Integer value1, Integer value2) {
+            addCriterion("masterid not between", value1, value2, "masterid");
+            return (Criteria) this;
+        }
+
         public Criteria andCreateTimeIsNull() {
             addCriterion("create_time is null");
             return (Criteria) this;

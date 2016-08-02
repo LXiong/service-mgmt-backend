@@ -1,0 +1,13 @@
+- hosts:  "{{host}}"
+  user: "{{user}}"
+  vars:
+     
+  tasks:
+     - name: docker pull
+       command: docker pull "{{image}}"
+     - name: docker run 
+       command: docker run --name {{container_name}} -d --net=host -p {{port}}:{{port}}  -v {{mysql_data_path}}:{{mysql_volumn_path}} -e "PORT={{port}}" -e "START_MODE={{mysql_type}}" -e "SLAVE_ID={{db_server_id}}" {{image}}
+#      command: docker run -itd -p 22 -p {{port}}:8080  -v /dev/urandom:/dev/random  --env "AUTH_URL={{auth_url}}" --env "AUTH_USER_PID={{auth_user_pid}}" --env "AUTH_SRV_ID={{auth_srv_id}}" --env "AUTH_SRV_PWD={{auth_srv_pwd}}"  "{{image}}"
+#		use and password may have some problem
+#       command: docker run -d --net=host -p {{port}}:{{port}} -v {{mysql_data_path}} -e "PORT={{port}}"  {{image}}
+#       command: docker run -d --net=host -p 39316:39316 -v /aifs01/mysqldata:/Percona-Server-5.6.24/data -e "PORT=39316" -e "MYSQL_HOME=/Percona-Server-5.6.24" percona:5.6.24	
