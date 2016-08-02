@@ -464,11 +464,11 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	public static final String CREATE_ANSIBLE_HOSTS = "rds/init_ansible_ssh_hosts.sh {0} {1} {2}";
 	/** 图片服务器 */
 	public static final String DOCKER_MASTER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
-			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14}";
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13}";
 	public static final String DOCKER_SLAVER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
-			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}";
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}";
 	public static final String DOCKER_BATMASTER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
-			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}";
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}";
 	public static String fillStringByArgs(String str, String[] arr) {
 		Matcher m = Pattern.compile("\\{(\\d+)\\}").matcher(str);
 		while (m.find()) {
@@ -504,6 +504,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		}
 		switch(savedRdsIncBase.getIncType()){
 		/**
+		 * rdspath
 		 * filename
 		 * sshuser
 		 * sshpassword		
