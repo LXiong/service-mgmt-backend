@@ -363,6 +363,11 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 					}
 				}
 			}
+		}else{
+			createResult.isInstanceConfig = isRightConfig;
+			createResult.isInstanceRun = false;
+			createResult.setStatus(ResponseResultMark.ERROR_ONLY_CAN_CREATE_MASTER);
+			return g.getGson().toJson(createResult);
 		}
 
 		// 将拓扑结构保存至注册中心（zk）
@@ -464,13 +469,15 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 * /
 	/** ansible hosts */
 	public static final String CREATE_ANSIBLE_HOSTS = "rds/init_ansible_ssh_hosts.sh {0} {1} {2}";
-	/** 图片服务器 */
-	public static final String DOCKER_MASTER_PARAM = "rds/ansible_master_run_image.sh {0} {1} {2} "
-			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13}";
-	public static final String DOCKER_SLAVER_PARAM = "rds/ansible_slaver_run_image.sh {0} {1} {2} "
-			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}";
-	public static final String DOCKER_BATMASTER_PARAM = "rds/ansible_run_image.sh {0} {1} {2} "
-			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}";
+	/** 图片服务器 
+	 * 不能存在第一个元素传入
+	 */
+	public static final String DOCKER_MASTER_PARAM = "rds/ansible_master_run_image.sh  {1} {2} "
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14}";
+	public static final String DOCKER_SLAVER_PARAM = "rds/ansible_slaver_run_image.sh {1} {2} "
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}";
+	public static final String DOCKER_BATMASTER_PARAM = "rds/ansible_run_image.sh {1} {2} "
+			+ "{3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16}";
 	public static String fillStringByArgs(String str, String[] arr) {
 		Matcher m = Pattern.compile("\\{(\\d+)\\}").matcher(str);
 		while (m.find()) {
@@ -557,7 +564,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			AgentUtil.executeCommand("chmod +x " + basePath + "rds/ansible_master_run_image.sh", AidUtil.getAid());
 			// 开始执行
 			String runImage = fillStringByArgs(DOCKER_MASTER_PARAM,
-					new String[] { rdsPath, 
+					new String[] { "",
+							rdsPath, 
 							savedRdsIncBase.getIncIp().replace(".", ""),// .cfg 文件名称 
 							incRes.getSshuser(),
 							incRes.getSshpassword(),
@@ -570,7 +578,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 							savedRdsIncBase.getUserId() + "-" + savedRdsIncBase.getServiceId() + "-" + savedRdsIncBase.getIncPort(),
 							savedRdsIncBase.getDbServerId(),
 							savedRdsIncBase.getDbStoreage() + "",
-							savedRdsIncBase.getIncType() + ""});
+							getIncTypeById(savedRdsIncBase.getIncType())});
 
 			LOG.debug("---------runImage {}----------", runImage);
 			AgentUtil.executeCommand(basePath + runImage, AidUtil.getAid());
@@ -642,7 +650,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 								savedRdsIncBase.getUserId() + "-" + savedRdsIncBase.getServiceId() + "-" + savedRdsIncBase.getIncPort(),
 								savedRdsIncBase.getDbServerId(),
 								savedRdsIncBase.getDbStoreage() + "",
-								savedRdsIncBase.getIncType() + "",
+								getIncTypeById(savedRdsIncBase.getIncType()),
 								masterInc.getIncIp(),
 								masterInc.getIncPort() + ""});
 
@@ -713,7 +721,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 									savedRdsIncBase.getUserId() + "-" + savedRdsIncBase.getServiceId() + "-" + savedRdsIncBase.getIncPort(),
 									savedRdsIncBase.getDbServerId(),
 									savedRdsIncBase.getDbStoreage() + "",
-									savedRdsIncBase.getIncType() + "",
+									getIncTypeById(savedRdsIncBase.getIncType()),
 									masterInc.getIncIp(),
 									masterInc.getIncPort() + ""});
 
@@ -729,6 +737,20 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 //		return true;
 		
 	}
+
+	private String getIncTypeById(Integer incType) {
+		// TODO Auto-generated method stub
+		switch(incType){
+		case InstanceType.MASTER:
+			return "master";
+		case InstanceType.SLAVER:
+			return "slaver";
+		case InstanceType.BATMASTER:
+			return "batmaster";
+		}
+		return null;
+	}
+
 
 	/**
 	 * 停止单个实例

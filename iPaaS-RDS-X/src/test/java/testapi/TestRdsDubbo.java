@@ -68,12 +68,13 @@ public class TestRdsDubbo {
 		creatObject.createBatmasterNum = 0;
 		creatObject.token = "2FJ3847FQ23UH923RHJDSFH";
 		// user_id对应ccs_user_config中的用户
-		creatObject.instanceBase = new RdsIncBase("00B66CF322E84539942FCCDEC9B25132", "mysql_for_docker", "BIU", 5, 100, "","",
-				"mysql5", "", 0, 1, "BIU,MYSQL,TEST",
+		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", 
+				"mysql_for_docker", "BIU", 5, 100, "","",
+				"mysql6", "", 0, 1, "BIU,MYSQL,TEST",
 				"BEIJING", 1, "no describe", "/aifs01", 
 				"/aifs01/mysqldata","", "192.168.*.*", 
 				"root", "root", "containerName",
-				"34", 50000, 2000, 123, 500,time,time);
+				"1234", 50000, 2000, 123, 500,time,time);
 		String request = g.toJson(creatObject);
 		System.out.println(request);
 		String result = incManager.create(request);
