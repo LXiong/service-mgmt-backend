@@ -27,11 +27,11 @@ public interface IRDSInstanceManager extends ISrvManager{
 	 *            :申请内容为json格式
 	 * @return
 	 */
-	@Path("/createmaster")
+	@Path("/create/master")
 	@POST
 	public String create(String createApply); 
 	
-	@Path("/createslaverorbatmaster")
+	@Path("/create/slaverorbatmaster")
 	@POST
 	public String createslobm(String create);
 

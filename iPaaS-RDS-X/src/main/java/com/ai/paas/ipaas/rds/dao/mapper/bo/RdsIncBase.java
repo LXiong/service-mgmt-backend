@@ -188,7 +188,12 @@ public class RdsIncBase implements Cloneable {
 	}
 
 	public RdsIncBase clone(){
-    	return this.clone();
+    	try {
+			return (RdsIncBase) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+    	return null;
     }
     
     public Integer getId() {

@@ -177,6 +177,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	private void dealCancelInstanceDevided(RdsIncBase instanceBase) {
 		// 停止运行实例，并移除相关镜像、配置、数据
 		stopInstance(instanceBase);
+		removeInstance(instanceBase);
 		// 删除RdsIncBase表中的信息
 		RdsIncBaseMapper instanceBaseMapper = ServiceUtil.getMapper(RdsIncBaseMapper.class);
 		instanceBaseMapper.deleteByPrimaryKey(instanceBase.getId());
@@ -645,12 +646,13 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 				AgentUtil.executeCommand("chmod +x " + basePath_s + "rds/ansible_slaver_run_image.sh", AidUtil.getAid());
 				// 开始执行
 				String runImage_s = fillStringByArgs(DOCKER_SLAVER_PARAM,
-						new String[] { rdsPath_s, 
-								savedRdsIncBase.getIncIp().replace(".", ""),
+						new String[] { "",
+								rdsPath_s, 
+								savedRdsIncBase.getIncIp().replace(".", ""),// .cfg 文件名称 
 								incRes.getSshuser(),
 								incRes.getSshpassword(),
-								imgRes.getImageRepository() + "/" + imgRes.getImageName(),
 								savedRdsIncBase.getIncIp(),
+								imgRes.getImageRepository() + "/" + imgRes.getImageName(),
 								savedRdsIncBase.getIncPort() + "",
 								savedRdsIncBase.getMysqlDataHome(),
 								savedRdsIncBase.getMysqlHome(),
@@ -716,12 +718,13 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 //					AgentUtil.executeCommand("chmod +x " + basePath_b + "rds/ansible_run_image.sh", AidUtil.getAid());
 //					// 开始执行
 //					String runImage_b = fillStringByArgs(DOCKER_BATMASTER_PARAM,
-//							new String[] { rdsPath_b, 
-//									savedRdsIncBase.getIncIp().replace(".", ""),
+//							new String[] { "",
+//									rdsPath_s, 
+//									savedRdsIncBase.getIncIp().replace(".", ""),// .cfg 文件名称 
 //									incRes.getSshuser(),
 //									incRes.getSshpassword(),
-//									imgRes.getImageRepository() + "/" + imgRes.getImageName(),
 //									savedRdsIncBase.getIncIp(),
+//									imgRes.getImageRepository() + "/" + imgRes.getImageName(),
 //									savedRdsIncBase.getIncPort() + "",
 //									savedRdsIncBase.getMysqlDataHome(),
 //									savedRdsIncBase.getMysqlHome(),
@@ -771,7 +774,6 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		try {
 			commandInstance(savedRdsIncBase,"stop");
 		} catch (IOException | PaasException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -780,23 +782,29 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		try {
 			commandInstance(savedRdsIncBase,"start");
 		} catch (IOException | PaasException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	private void removeInstance(RdsIncBase savedRdsIncBase) {
+		try {
+			commandInstance(savedRdsIncBase,"rm");
+		} catch (IOException | PaasException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	private void restartInstance(RdsIncBase savedRdsIncBase) {
 		try {
 			commandInstance(savedRdsIncBase,"restart");
 		} catch (IOException | PaasException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 	}
 	private void configModify(RdsIncBase ib, int argmentedExternalStorage) {
-		// TODO Auto-generated method stub
-		
+		//TODO doing some thing
 	}
 	
 	private void commandInstance(RdsIncBase savedRdsIncBase, String command) throws ClientProtocolException, IOException, PaasException {
@@ -922,6 +930,15 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		return null;
 	}
 	
+	/**
+	 * 不允许在同一台机子上跑多个实例
+	 * 测试时条件有限，所以先这样哈哈
+	 * 
+	 * @param masterInstance
+	 * @param resourceList
+	 * @param exceptInstanceList
+	 * @return
+	 */
 	private RDSResourcePlan getExpectResourcePlan(RdsIncBase masterInstance, List<RdsResourcePool> resourceList,
 			List<RdsResourcePool> exceptInstanceList) {
 		
@@ -930,9 +947,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		List<RdsResourcePool> usableResourceList = getMasterUsableResource(masterInstance.getDbStoreage(), resourceList);
 
 		ChoiceResStrategy crs = new ChoiceResStrategy(new MoreMemIdleChoice());
-		List<RdsResourcePool> exceptList = new LinkedList<RdsResourcePool>();
-		exceptList.addAll(exceptInstanceList);
-		RdsResourcePool decidedRes = crs.makeDecision(usableResourceList, exceptList);
+//		RdsResourcePool decidedRes = crs.makeDecision(usableResourceList, exceptInstanceList);
+		RdsResourcePool decidedRes = crs.makeDecision(usableResourceList);
 
 		if (null == decidedRes) {
 			return null;
@@ -1335,7 +1351,6 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		try {
 			iCCSComponentManageSv.add(op, g.getGson().toJson(instanceRDS));
 		} catch (PaasException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
