@@ -11,6 +11,7 @@ import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsIncBase;
 import com.ai.paas.ipaas.rds.manage.rest.interfaces.IRDSInstanceManager;
 import com.ai.paas.ipaas.rds.manage.rest.interfaces.IRDSResourcePool;
 import com.ai.paas.ipaas.rds.service.transfer.vo.CreateRDS;
+import com.ai.paas.ipaas.rds.service.transfer.vo.GetIncInfo;
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.google.gson.Gson;
 
@@ -22,8 +23,25 @@ public class TestRdsDubbo {
 	private IRDSInstanceManager incManager;
 	@Reference
 	private IRDSResourcePool resMananger;
+//	@Reference
+//	private IRDSInstanceOperater incOperater;
 	
 	Gson g = new Gson();
+	
+	
+	/**
+	 * passed
+	 */
+	@Test
+	public void getIncList() {
+		GetIncInfo getIncInfo = new GetIncInfo();
+		getIncInfo.getAll = 1;
+		String resquest = g.toJson(getIncInfo);
+		String result = incManager.getinstanceinfo(resquest);
+		System.out.println(result);
+	}
+	
+	
 	/**
 	 * passed
 	 */
@@ -77,12 +95,9 @@ public class TestRdsDubbo {
 		creatObject.createBatmasterNum = 0;
 		creatObject.token = "2FJ3847FQ23UH923RHJDSFH";
 		// user_id对应ccs_user_config中的用户
-		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", 
-				"testmysql", "BIU", 5, 100, "","",
-				"mysql6", "", 0, 1, "BIU,MYSQL,TEST",
-				"BEIJING", 1, "no describe", "/aifs01", 
-				"/aifs01/mysqldata","", "192.168.*.*", 
-				"root", "root", "containerName",
+		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", "testmysql", "BIU", 5, 100, "","",
+				"mysql6", "", 0, 1, "BIU,MYSQL,TEST","BEIJING", 1, "no describe", "/aifs01", 
+				"/aifs01/mysqldata","", "192.168.*.*", "root", "root", "containerName",
 				"1234", 50000, 2000, 123, 500,time,time);
 		String request = g.toJson(creatObject);
 		System.out.println(request);

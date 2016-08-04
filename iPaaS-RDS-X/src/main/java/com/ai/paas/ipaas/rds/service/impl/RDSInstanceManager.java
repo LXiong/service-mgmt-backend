@@ -42,6 +42,7 @@ import com.ai.paas.ipaas.rds.service.transfer.vo.CancelRDSResult;
 import com.ai.paas.ipaas.rds.service.transfer.vo.CreateRDS;
 import com.ai.paas.ipaas.rds.service.transfer.vo.CreateRDSResult;
 import com.ai.paas.ipaas.rds.service.transfer.vo.CreateSRDS;
+import com.ai.paas.ipaas.rds.service.transfer.vo.GetIncInfo;
 import com.ai.paas.ipaas.rds.service.transfer.vo.GetInstanceInfoRDS;
 import com.ai.paas.ipaas.rds.service.transfer.vo.MedthodDescribe;
 import com.ai.paas.ipaas.rds.service.transfer.vo.ModifyRDS;
@@ -1300,26 +1301,39 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 
 	@Override
 	public String getinstanceinfo(String getinstanceinfo) {
-		GetInstanceInfoRDS getStatusObject = g.getGson().fromJson(getinstanceinfo, GetInstanceInfoRDS.class);
-//		List<RdsIncBase> instanceList = new ArrayList<RdsIncBase>();
-//		EntityToWhere<RdsIncBase> e2Where = new EntityToWhere<RdsIncBase>();
-		// 获取mysql服务状态
-		RdsIncBaseMapper incBaseMapper = ServiceUtil.getMapper(RdsIncBaseMapper.class);
-		List<RdsIncBase> rdsIncBaseList = incBaseMapper.selectByExample(getStatusObject.rdsIncBaseCriteria);
-//		if(null != getStatusObject.sort){
-//			try {
-//				instanceList = SpecialQueryRepo.findByInstanceParam(e2Where.entity2WhereSort(getStatusObject.instancebase,getStatusObject.sort));
-//			} catch (IllegalArgumentException | IllegalAccessException e) {
-//				e.printStackTrace();
-//			}
-//		} else {
-//			try {
-//				instanceList = SpecialQueryRepo.findByInstanceParam(e2Where.entity2Where(getStatusObject.instancebase));
-//			} catch (IllegalArgumentException | IllegalAccessException e) {
-//				e.printStackTrace();
-//			}
-//		}
-		return g.getGson().toJson(rdsIncBaseList);
+//		GetInstanceInfoRDS getStatusObject = g.getGson().fromJson(getinstanceinfo, GetInstanceInfoRDS.class);
+////		List<RdsIncBase> instanceList = new ArrayList<RdsIncBase>();
+////		EntityToWhere<RdsIncBase> e2Where = new EntityToWhere<RdsIncBase>();
+//		// 获取mysql服务状态
+//		RdsIncBaseMapper incBaseMapper = ServiceUtil.getMapper(RdsIncBaseMapper.class);
+//		List<RdsIncBase> rdsIncBaseList = incBaseMapper.selectByExample(getStatusObject.rdsIncBaseCriteria);
+////		if(null != getStatusObject.sort){
+////			try {
+////				instanceList = SpecialQueryRepo.findByInstanceParam(e2Where.entity2WhereSort(getStatusObject.instancebase,getStatusObject.sort));
+////			} catch (IllegalArgumentException | IllegalAccessException e) {
+////				e.printStackTrace();
+////			}
+////		} else {
+////			try {
+////				instanceList = SpecialQueryRepo.findByInstanceParam(e2Where.entity2Where(getStatusObject.instancebase));
+////			} catch (IllegalArgumentException | IllegalAccessException e) {
+////				e.printStackTrace();
+////			}
+////		}
+//		return g.getGson().toJson(rdsIncBaseList);
+		
+		
+		GetIncInfo getIncInfo = g.getGson().fromJson(getinstanceinfo, GetIncInfo.class);
+		RdsIncBaseMapper incMapper = ServiceUtil.getMapper(RdsIncBaseMapper.class);
+		if(getIncInfo.getAll == 1){
+			RdsIncBaseCriteria cri = new RdsIncBaseCriteria();
+			cri.createCriteria().andIdBetween(1, 10000000);
+			List<RdsIncBase> resultList = incMapper.selectByExample(cri);
+			return g.getGson().toJson(resultList);
+		} else {
+			List<RdsIncBase> resultList = incMapper.selectByExample(getIncInfo.rdsIncBaseCri);
+			return g.getGson().toJson(resultList);
+		}
 	}
 	
 	/**
