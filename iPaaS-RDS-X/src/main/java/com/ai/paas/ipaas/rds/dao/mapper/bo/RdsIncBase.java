@@ -2,7 +2,7 @@ package com.ai.paas.ipaas.rds.dao.mapper.bo;
 
 import java.sql.Timestamp;
 
-public class RdsIncBase implements Cloneable {
+public class RdsIncBase {
     private Integer id;
 
     private String userId;
@@ -188,12 +188,39 @@ public class RdsIncBase implements Cloneable {
 	}
 
 	public RdsIncBase clone(){
-    	try {
-			return (RdsIncBase) super.clone();
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-    	return null;
+		RdsIncBase incBaseClone = new RdsIncBase();
+		incBaseClone.id = this.id;
+		incBaseClone.userId = this.userId;
+		incBaseClone.serviceId = this.serviceId;
+		incBaseClone.depId = this.depId;
+		incBaseClone.imgId = this.imgId;
+		incBaseClone.resId = this.resId;
+		incBaseClone.bakId = this.bakId;
+		incBaseClone.slaverId = this.slaverId;
+		incBaseClone.incName = this.incName;
+		incBaseClone.incIp = this.incIp;
+		incBaseClone.incPort = this.incPort;
+		incBaseClone.incType = this.incType;
+		incBaseClone.incTag = this.incTag;
+		incBaseClone.incLocation = this.incLocation;
+		incBaseClone.incStatus = this.incStatus;
+		incBaseClone.incDescribe = this.incDescribe;
+		incBaseClone.mysqlHome = this.mysqlHome;
+		incBaseClone.mysqlDataHome = this.mysqlDataHome;
+		incBaseClone.mysqlVolumnPath = this.mysqlVolumnPath;
+		incBaseClone.whiteList = this.whiteList;
+		incBaseClone.rootName = this.rootName;
+		incBaseClone.rootPassword = this.rootPassword;
+		incBaseClone.containerName = this.containerName;
+		incBaseClone.dbServerId = this.dbServerId;
+		incBaseClone.dbStoreage = this.dbStoreage;
+		incBaseClone.dbUsedStorage = this.dbUsedStorage;
+		incBaseClone.intStorage = this.intStorage;
+		incBaseClone.maxConnectNum = this.maxConnectNum;
+		incBaseClone.masterid = this.masterid;
+		incBaseClone.createTime = this.createTime;
+		incBaseClone.updateTime = this.updateTime;
+		return incBaseClone;
     }
     
     public Integer getId() {

@@ -403,16 +403,18 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		RdsResourcePoolCriteria cri = new RdsResourcePoolCriteria();
 		cri.createCriteria().andCurrentportBetween(0, 100000);
 		List<RdsResourcePool> allRes = resPoolMapper.selectByExample(cri);
-		RdsIncBase masterCopy = masterInstance.clone();
-		masterCopy.setMasterid(createObject.masterinstanceid);
+		
 		// 查询资源情况，根据请求情况与资源情况获取分配计划
-		RDSResourcePlan resourceBatMasterPlan = getExpectResourcePlan(masterCopy, allRes, exceptResourceResourceList);
+		RDSResourcePlan resourceBatMasterPlan = getExpectResourcePlan(masterInstance, allRes, exceptResourceResourceList);
 		if(null == resourceBatMasterPlan.instanceresourcebelonger){
 			createResult.setStatus(ResponseResultMark.ERROR_NOT_EXIST_USEFUL_RESOURCE);
 			return g.getGson().toJson(createResult);
 		}
+		
+		RdsIncBase masterCopy = masterInstance.clone();
+		masterCopy.setMasterid(createObject.masterinstanceid);
 		// 对资源分配后的情况保存到数据库，修改资源池的情况，插入实例信息
-		RdsIncBase saveRdsIncBase = savePlan(resourceBatMasterPlan, masterInstance, createObject.thisInstanceType);
+		RdsIncBase saveRdsIncBase = savePlan(resourceBatMasterPlan, masterCopy, createObject.thisInstanceType);
 
 		// 对需要外键延期保存的数据，单独进行保存（instanceslaver、instancebatmaster）
 		switch(saveRdsIncBase.getIncType()){
@@ -754,7 +756,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		case InstanceType.MASTER:
 			return "master";
 		case InstanceType.SLAVER:
-			return "slaver";
+			return "slave";
 		case InstanceType.BATMASTER:
 			return "batmaster";
 		}
@@ -1042,9 +1044,11 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		
 		instanceBase.setIncType(RdsIncBaseNetworkType);
 		if(RdsIncBaseNetworkType == InstanceType.BATMASTER){
+//			instanceBase.setMasterid(instanceBase.getId());
 			instanceBase.setIncName(instanceBase.getIncName() + "-BATMASTER-" + Math.random());
 		}
 		if(RdsIncBaseNetworkType == InstanceType.SLAVER){
+//			instanceBase.setMasterid(instanceBase.getId());
 			instanceBase.setIncName(instanceBase.getIncName() + "-SLAVER-" + Math.random());
 		}
 		

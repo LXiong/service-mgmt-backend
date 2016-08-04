@@ -35,6 +35,7 @@ public class TestRdsDubbo {
 	
 	/**
 	 * passed
+	 * 解析方法:不用解析，为字符串
 	 */
 //	@Test
 //	public void addRes(){
@@ -50,6 +51,7 @@ public class TestRdsDubbo {
 
 	/**
 	 * passed
+	 * 解析方法:不用解析，为字符串
 	 */
 //	@Test
 //	public void deleteRes(){
@@ -64,6 +66,8 @@ public class TestRdsDubbo {
 
 	/**
 	 * passed
+	 * 解析方法:CreateRDSResult ct = g.fromGson(obj,CreateRDSResult.class)
+	 * 主要是status值有用
 	 */
 	@Test
 	public void create(){
@@ -74,7 +78,7 @@ public class TestRdsDubbo {
 		creatObject.token = "2FJ3847FQ23UH923RHJDSFH";
 		// user_id对应ccs_user_config中的用户
 		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", 
-				"mysql_for_docker", "BIU", 5, 100, "","",
+				"testmysql", "BIU", 5, 100, "","",
 				"mysql6", "", 0, 1, "BIU,MYSQL,TEST",
 				"BEIJING", 1, "no describe", "/aifs01", 
 				"/aifs01/mysqldata","", "192.168.*.*", 
@@ -85,16 +89,33 @@ public class TestRdsDubbo {
 		String result = incManager.create(request);
 		System.out.println(result);
 	}
+	
+	/**
+	 * 
+	 */
+//	@Test
+//	public void createslobm(){
+//		Timestamp time = new Timestamp(System.currentTimeMillis());
+//		CreateSRDS createObject = new CreateSRDS();
+//		createObject.masterinstanceid = 58;
+//		createObject.thisInstanceType = 2;
+//		String request = g.toJson(createObject);
+//		System.out.println(request);
+//		String result = incManager.createslobm(request);
+//		System.out.println(result);
+//	}
 
 	/**
 	 * passed
+	 * 解析方法:CancelRDSResult ct = g.fromGson(obj,CancelRDSResult.class)
+	 * 主要是status值有用
 	 */
 //	@Test
 //	public void cancel(){
 //		CancelRDS cancelObject = new CancelRDS();
 //		cancelObject.user_id = "X";
 //		cancelObject.token = "X";
-//		cancelObject.instanceid = 21;
+//		cancelObject.instanceid = 73;
 //		String request = g.toJson(cancelObject);
 //		System.out.println(request);
 //		String result = incManager.cancel(request);
@@ -103,6 +124,8 @@ public class TestRdsDubbo {
 	
 	/**
 	 * passed
+	 * 解析方法:StopRDSResult ct = g.fromGson(obj,StopRDSResult.class)
+	 * 主要是status值有用
 	 */
 //	@Test
 //	public void stop(){
@@ -118,6 +141,8 @@ public class TestRdsDubbo {
 	
 	/**
 	 * passed
+	 * 解析方法:StartRDSResult ct = g.fromGson(obj,StartRDSResult.class)
+	 * 主要是status值有用
 	 */
 //	@Test
 //	public void start(){
