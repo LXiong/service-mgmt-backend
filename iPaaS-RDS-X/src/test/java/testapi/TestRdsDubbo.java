@@ -36,14 +36,14 @@ public class TestRdsDubbo {
 	/**
 	 * passed
 	 */
-	@Test
-	public void getIncList() {
-		GetIncInfo getIncInfo = new GetIncInfo();
-		getIncInfo.getAll = 1;
-		String resquest = g.toJson(getIncInfo);
-		String result = incManager.getinstanceinfo(resquest);
-		System.out.println(result);
-	}
+//	@Test
+//	public void getIncList() {
+//		GetIncInfo getIncInfo = new GetIncInfo();
+//		getIncInfo.getAll = 1;
+//		String resquest = g.toJson(getIncInfo);
+//		String result = incManager.getinstanceinfo(resquest);
+//		System.out.println(result);
+//	}
 	
 	
 	/**
@@ -91,67 +91,67 @@ public class TestRdsDubbo {
 	 * 解析方法:CreateRDSResult ct = g.fromGson(obj,CreateRDSResult.class)
 	 * 主要是status值有用
 	 */
-	@Test
-	public void create(){
-		Timestamp time = new Timestamp(System.currentTimeMillis()); 
-		CreateRDS creatObject = new CreateRDS();
-		creatObject.createSlaverNum = 1;
-		creatObject.createBatmasterNum = 0;
-		// user_id对应ccs_user_config中的用户
-		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", "testmysql", "BIU", 5, 100, "","",
-				"mysql6", "", 0, 1, "BIU,MYSQL,TEST","BEIJING", 1, "no describe", "/aifs01", 
-				"/aifs01/mysqldata","", "192.168.*.*", "root", "root", "containerName",
-				"1234", 50000, 2000, 123, 500,time,time);
-		String request = g.toJson(creatObject);
-		System.out.println(request);
-		String result = incManager.create(request);
-		System.out.println(result);
-	}
+//	@Test
+//	public void create(){
+//		Timestamp time = new Timestamp(System.currentTimeMillis()); 
+//		CreateRDS creatObject = new CreateRDS();
+//		creatObject.createSlaverNum = 1;
+//		creatObject.createBatmasterNum = 0;
+//		// user_id对应ccs_user_config中的用户
+//		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", "testmysql", "BIU", 5, 100, "","",
+//				"mysql6", "", 0, 1, "BIU,MYSQL,TEST","BEIJING", 1, "no describe", "/aifs01", 
+//				"/aifs01/mysqldata","", "192.168.*.*", "root", "root", "containerName",
+//				"1234", 50000, 2000, 123, 500,time,time);
+//		String request = g.toJson(creatObject);
+//		System.out.println(request);
+//		String result = incManager.create(request);
+//		System.out.println(result);
+//	}
 	
 	/**
 	 * 
 	 */
-	@Test
-	public void createslobm(){
-		Timestamp time = new Timestamp(System.currentTimeMillis());
-		CreateSRDS createObject = new CreateSRDS();
-		createObject.masterinstanceid = 58;
-		createObject.thisInstanceType = 2;
-		String request = g.toJson(createObject);
-		System.out.println(request);
-		String result = incManager.createslobm(request);
-		System.out.println(result);
-	}
+//	@Test
+//	public void createslobm(){
+//		Timestamp time = new Timestamp(System.currentTimeMillis());
+//		CreateSRDS createObject = new CreateSRDS();
+//		createObject.masterinstanceid = 58;
+//		createObject.thisInstanceType = 2;
+//		String request = g.toJson(createObject);
+//		System.out.println(request);
+//		String result = incManager.createslobm(request);
+//		System.out.println(result);
+//	}
 
 	/**
 	 * passed
 	 * 解析方法:CancelRDSResult ct = g.fromGson(obj,CancelRDSResult.class)
 	 * 主要是status值有用
 	 */
-	@Test
-	public void cancel(){
-		CancelRDS cancelObject = new CancelRDS();
-		cancelObject.instanceid = 73;
-		String request = g.toJson(cancelObject);
-		System.out.println(request);
-		String result = incManager.cancel(request);
-		System.out.println(result);
-	}
+//	@Test
+//	public void cancel(){
+//		CancelRDS cancelObject = new CancelRDS();
+//		cancelObject.instanceid = 77;
+//		String request = g.toJson(cancelObject);
+//		System.out.println(request);
+//		String result = incManager.cancel(request);
+//		System.out.println(result);
+//	}
 	
 	/**
 	 * passed
 	 * 解析方法:StopRDSResult ct = g.fromGson(obj,StopRDSResult.class)
 	 * 主要是status值有用
 	 */
-	@Test
-	public void stop(){
-		StopRDS stopObject = new StopRDS();
-		stopObject.instanceid = 49;
-		String request = g.toJson(stopObject);
-		System.out.println(request);
-		String result = incManager.stop(request);
-		System.out.println(result);
-	}
+//	@Test
+//	public void stop(){
+//		StopRDS stopObject = new StopRDS();
+//		stopObject.instanceid = 81;
+//		String request = g.toJson(stopObject);
+//		System.out.println(request);
+//		String result = incManager.stop(request);
+//		System.out.println(result);
+//	}
 	
 	/**
 	 * passed
@@ -161,7 +161,7 @@ public class TestRdsDubbo {
 	@Test
 	public void start(){
 		StartRDS startObject = new StartRDS();
-		startObject.instanceid = 49;
+		startObject.instanceid = 81;
 		String request = g.toJson(startObject);
 		System.out.println(request);
 		String result = incManager.start(request);

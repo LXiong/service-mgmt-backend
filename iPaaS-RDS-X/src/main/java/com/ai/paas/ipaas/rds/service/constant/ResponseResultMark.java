@@ -20,6 +20,8 @@ public interface ResponseResultMark {
 	public int ERROR_UNKNOW_INSTANCE_TYPE = 208;
 	public int ERROR_CANNOT_START_OPERA_THIS_INSTANCE_TYPE = 209;
 	public int ERROR_ONLY_CAN_CREATE_MASTER = 210;
+	public int ERROR_BAD_CONFIG = 211;
+	public int ERROR_BAD_CONFIG_ZK = 212;
 	
 }
 		

@@ -44,6 +44,7 @@ import com.ai.paas.ipaas.rds.service.transfer.vo.CreateRDSResult;
 import com.ai.paas.ipaas.rds.service.transfer.vo.CreateSRDS;
 import com.ai.paas.ipaas.rds.service.transfer.vo.GetIncInfo;
 import com.ai.paas.ipaas.rds.service.transfer.vo.GetInstanceInfoRDS;
+import com.ai.paas.ipaas.rds.service.transfer.vo.InstanceBaseSimple;
 import com.ai.paas.ipaas.rds.service.transfer.vo.MedthodDescribe;
 import com.ai.paas.ipaas.rds.service.transfer.vo.ModifyRDS;
 import com.ai.paas.ipaas.rds.service.transfer.vo.ModifyRDSResult;
@@ -116,11 +117,13 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			instance.setIncStatus(RDSCommonConstant.INS_FREEZE);
 			RdsIncBaseMapper statusMapper = ServiceUtil.getMapper(RdsIncBaseMapper.class);
 			statusMapper.updateByPrimaryKeySelective(instance);
-			dealCancelInstanceDevided(instance);
 			try {
+				dealCancelInstanceDevided(instance);
 				deleteZK(instance);
-			} catch (PaasException e) {
+			} catch (IOException | PaasException e) {
 				e.printStackTrace();
+				cancelResult.setStatus(ResponseResultMark.ERROR_BAD_CONFIG);
+				return g.getGson().toJson(cancelResult);
 			}
 		};
 
@@ -174,8 +177,11 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 * 数据库已经添加了触发器trigger
 	 * 从表将与主表一同删除
 	 * @param instanceBase
+	 * @throws PaasException 
+	 * @throws IOException 
+	 * @throws ClientProtocolException 
 	 */
-	private void dealCancelInstanceDevided(RdsIncBase instanceBase) {
+	private void dealCancelInstanceDevided(RdsIncBase instanceBase) throws ClientProtocolException, IOException, PaasException {
 		// 停止运行实例，并移除相关镜像、配置、数据
 		stopInstance(instanceBase);
 		removeInstance(instanceBase);
@@ -259,6 +265,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		
 		// 对资源分配后的情况保存到数据库，修改资源池的情况，插入实例信息
 		RdsIncBase savedRdsIncBase = savePlan(resourcePlan, createObject.instanceBase, InstanceType.MASTER);
+		createResult.incSimList.add(new InstanceBaseSimple(savedRdsIncBase));
 		
 		// 对实例进行配置,并启动 master/slaver/batmaster 通过AgentClient
 		
@@ -275,6 +282,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		} catch (IOException | PaasException e) {
 			// 处理。。。
 			e.printStackTrace();
+			createResult.setStatus(ResponseResultMark.ERROR_BAD_CONFIG);
+			return g.getGson().toJson(createResult);
 		}
 		// 修改数据库中服务器状态
 		savedRdsIncBase.setIncStatus(RDSCommonConstant.INS_STARTED);
@@ -302,6 +311,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 				batInCopy.setMasterid(savedRdsIncBase.getId());
 				// 对资源分配后的情况保存到数据库，修改资源池的情况，插入实例信息
 				RdsIncBase batMasterInstance = savePlan(resourceBatMasterPlan, batInCopy, InstanceType.BATMASTER);
+				createResult.incSimList.add(new InstanceBaseSimple(batMasterInstance));
 				exceptionResPoolList.add(resourceBatMasterPlan.instanceresourcebelonger);
 				// 对需要外键延期保存的数据，单独进行保存（instanceslaver、instancebatmaster）
 				savedRdsIncBase.setBakId(batMasterInstance.getId() + "");
@@ -323,6 +333,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 					save2ZK(batMasterInstance);
 				} catch (IOException | PaasException e) {
 					e.printStackTrace();
+					createResult.setStatus(ResponseResultMark.ERROR_BAD_CONFIG);
+					return g.getGson().toJson(createResult);
 				}
 			}
 
@@ -338,7 +350,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 					slaInCopy.setMasterid(savedRdsIncBase.getId());
 					// 对资源分配后的情况保存到数据库，修改资源池的情况，插入实例信息
 					RdsIncBase ib = savePlan(resourceSlaverPlan, slaInCopy, InstanceType.SLAVER);
-					
+					createResult.incSimList.add(new InstanceBaseSimple(ib));
 					exceptionResPoolList.add(resourceSlaverPlan.instanceresourcebelonger);
 					// 对需要外键延期保存的数据，单独进行保存（instanceslaver、instancebatmaster）
 					if(savedRdsIncBase.getSlaverId().isEmpty() || savedRdsIncBase.getSlaverId().equals("") || savedRdsIncBase.getSlaverId() == null){
@@ -363,6 +375,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 						save2ZK(ib);
 					} catch (IOException | PaasException e) {
 						e.printStackTrace();
+						createResult.setStatus(ResponseResultMark.ERROR_BAD_CONFIG);
+						return g.getGson().toJson(createResult);
 					}
 				}
 			}
@@ -459,6 +473,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			
 		} catch (IOException | PaasException e) {
 			e.printStackTrace();
+			createResult.setStatus(ResponseResultMark.ERROR_BAD_CONFIG);
+			return g.getGson().toJson(createResult);
 		}
 		if (true == isRightBatMasterConfig) {
 			
@@ -773,38 +789,20 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	 * @throws IOException 
 	 * @throws ClientProtocolException 
 	 */
-	private void stopInstance(RdsIncBase savedRdsIncBase)  {
-		try {
+	private void stopInstance(RdsIncBase savedRdsIncBase) throws ClientProtocolException, IOException, PaasException  {
 			commandInstance(savedRdsIncBase,"stop");
-		} catch (IOException | PaasException e) {
-			e.printStackTrace();
-		}
 	}
 	
-	private void startInstance(RdsIncBase savedRdsIncBase) {
-		try {
+	private void startInstance(RdsIncBase savedRdsIncBase) throws ClientProtocolException, IOException, PaasException {
 			commandInstance(savedRdsIncBase,"start");
-		} catch (IOException | PaasException e) {
-			e.printStackTrace();
-		}
 	}
 	
-	private void removeInstance(RdsIncBase savedRdsIncBase) {
-		try {
+	private void removeInstance(RdsIncBase savedRdsIncBase) throws ClientProtocolException, IOException, PaasException {
 			commandInstance(savedRdsIncBase,"rm");
-		} catch (IOException | PaasException e) {
-			e.printStackTrace();
-		}
-		
 	}
 	
-	private void restartInstance(RdsIncBase savedRdsIncBase) {
-		try {
+	private void restartInstance(RdsIncBase savedRdsIncBase) throws ClientProtocolException, IOException, PaasException {
 			commandInstance(savedRdsIncBase,"restart");
-		} catch (IOException | PaasException e) {
-			e.printStackTrace();
-		}
-		
 	}
 	private void configModify(RdsIncBase ib, int argmentedExternalStorage) {
 		//TODO doing some thing
@@ -1060,6 +1058,7 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		instanceBase.setIncPort(resourcePlan.port);
 		instanceBase.setIncStatus(resourcePlan.Status);
 		instanceBase.setMysqlVolumnPath(resourcePlan.instanceresourcebelonger.getVolumnPath());
+		instanceBase.setCreateTime(new Timestamp(System.currentTimeMillis()));
 		instanceBase.setUpdateTime(new Timestamp(System.currentTimeMillis()));
 		
 		// 保存实例
@@ -1106,13 +1105,19 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 					instance.setIncStatus(RDSCommonConstant.INS_STOPPING);
 					incBaseMapper.updateByPrimaryKey(instance);
 					// 启动mysql服务
-					stopInstance(instance);
+					try {
+						stopInstance(instance);
+					} catch (IOException | PaasException e) {
+						e.printStackTrace();
+						ModifyRDSResult stopRDSResult = new ModifyRDSResult(ResponseResultMark.ERROR_BAD_CONFIG);
+						return g.getGson().toJson(stopRDSResult);
+					}
 					// 修改数据库中服务器状态
 					instance.setIncStatus(RDSCommonConstant.INS_STOPPED);
 					instanceStackBack.add(instance);
 				};
 			}else{
-				StopRDSResult stopRDSResult = new StopRDSResult(ResponseResultMark.WARNING_INSTANCE_STACK_EMPTY);
+				ModifyRDSResult stopRDSResult = new ModifyRDSResult(ResponseResultMark.WARNING_INSTANCE_STACK_EMPTY);
 				return g.getGson().toJson(stopRDSResult);
 			}
 			// 对master、batmaster、slaver选择进行扩充，数据库修改空间配置
@@ -1207,7 +1212,13 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 				instance.setIncStatus(RDSCommonConstant.INS_STARTING);
 				incBaseMapper.updateByPrimaryKey(instance);
 				// 启动mysql服务
-				startInstance(instance);
+				try {
+					startInstance(instance);
+				} catch (IOException | PaasException e) {
+					e.printStackTrace();
+					StartRDSResult stopRDSResult = new StartRDSResult(ResponseResultMark.ERROR_BAD_CONFIG);
+					return g.getGson().toJson(stopRDSResult);
+				}
 				// 修改数据库中服务器状态
 				instance.setIncStatus(RDSCommonConstant.INS_STARTED);
 				incBaseMapper.updateByPrimaryKey(instance);
@@ -1242,7 +1253,13 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 				instance.setIncStatus(RDSCommonConstant.INS_STARTING);
 				incBaseMapper.updateByPrimaryKey(instance);
 				// 启动mysql服务
-				stopInstance(instance);
+				try {
+					stopInstance(instance);
+				} catch (IOException | PaasException e) {
+					e.printStackTrace();
+					StopRDSResult stopRDSResult = new StopRDSResult(ResponseResultMark.ERROR_BAD_CONFIG);
+					return g.getGson().toJson(stopRDSResult);
+				}
 				
 				// 修改数据库中服务器状态
 				instance.setIncStatus(RDSCommonConstant.INS_STARTED);
@@ -1283,7 +1300,13 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 				instance.setIncStatus(RDSCommonConstant.INS_STARTING);
 				incBaseMapper.updateByPrimaryKey(instance);
 				// 启动mysql服务
-				restartInstance(instance);
+				try {
+					restartInstance(instance);
+				} catch (IOException | PaasException e) {
+					e.printStackTrace();
+					RestartResult restartRDSResult = new RestartResult(ResponseResultMark.ERROR_BAD_CONFIG);
+					return g.getGson().toJson(restartRDSResult);
+				}
 				// 修改数据库中服务器状态
 				instance.setIncStatus(RDSCommonConstant.INS_STARTED);
 				incBaseMapper.updateByPrimaryKey(instance);

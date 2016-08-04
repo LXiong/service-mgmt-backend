@@ -1,6 +1,7 @@
 package com.ai.paas.ipaas.rds.service.transfer.vo;
 
 
+import java.util.LinkedList;
 import java.util.List;
 
 import com.ai.paas.ipaas.rds.dao.wo.InstanceBase;
@@ -17,6 +18,7 @@ public class CreateRDSResult extends RDSResult{
 	public boolean isInstanceConfig;
 	public boolean isInstanceRun;
 	public InstanceBase Instance;
+	public List<InstanceBaseSimple> incSimList = new LinkedList<InstanceBaseSimple>(); 
 //	public boolean isExistBatMaster;
 //	public boolean isBatMasterConfig;
 //	public boolean isBatMasterRun;
