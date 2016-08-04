@@ -8,7 +8,5 @@ package com.ai.paas.ipaas.rds.service.transfer.vo;
  */
 public class StartRDS  {
 
-	public int user_id;
-	public int token;
 	public int instanceid;
 }

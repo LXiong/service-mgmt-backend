@@ -31,7 +31,6 @@ public class ApiString {
 		CreateRDS creatObject = new CreateRDS();
 		creatObject.createSlaverNum = 1;
 		creatObject.createBatmasterNum = 0;
-		creatObject.token = "2FJ3847FQ23UH923RHJDSFH";
 		// user_id对应ccs_user_config中的用户
 		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", 
 				"testmysql", "BIU", 5, 100, "","",
@@ -45,26 +44,20 @@ public class ApiString {
 		
 		// cancel rds, only master 
 		CancelRDS cancelObject = new CancelRDS();
-		cancelObject.user_id = "X";
-		cancelObject.token = "X";
 		cancelObject.instanceid = 73;
 		String request3 = g.toJson(cancelObject);
 		System.out.println(request3);
 		
 		// stop exist inc
 		StopRDS stopObject = new StopRDS();
-		stopObject.user_id = 123123;
 		stopObject.instanceid = 49;
-		stopObject.token = 123123;
 		String request4 = g.toJson(stopObject);
 		System.out.println(request4);
 		
 		
 		// start exist inc
 		StartRDS startObject = new StartRDS();
-		startObject.user_id = 123123;
 		startObject.instanceid = 49;
-		startObject.token = 123123;
 		String request5 = g.toJson(startObject);
 		System.out.println(request5);
 	}

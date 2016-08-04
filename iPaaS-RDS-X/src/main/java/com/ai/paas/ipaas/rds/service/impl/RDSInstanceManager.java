@@ -191,8 +191,8 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 
 
 	private boolean CheckCancelDataLegal(CancelRDS cancelObject) {
-		if((0 < cancelObject.instanceid) && null == cancelObject.token && null == cancelObject.user_id)
-			return false;
+//		if((0 < cancelObject.instanceid) && null == cancelObject.token && null == cancelObject.user_id)
+//			return false;
 		return true;
 	}
 
@@ -235,11 +235,11 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		CreateRDSResult createResult = new CreateRDSResult(ResponseResultMark.WARN_INIT_STATUS);
 		List<RdsResourcePool> exceptionResPoolList = new LinkedList<RdsResourcePool>();
 		// 检查用户操作权限是否合法
-		if (false == CheckLegal(createObject.instanceBase.getUserId(), createObject.instanceBase.getServiceId(),
-				createObject.token)) {
-			createResult.setStatus(ResponseResultMark.ERROR_ILLEGAL_AUTHORITY);
-			return g.getGson().toJson(createResult);
-		}
+//		if (false == CheckLegal(createObject.instanceBase.getUserId(), createObject.instanceBase.getServiceId(),
+//				createObject.token)) {
+//			createResult.setStatus(ResponseResultMark.ERROR_ILLEGAL_AUTHORITY);
+//			return g.getGson().toJson(createResult);
+//		}
 		// 检查数据是否合法
 		if (false == CheckData(createObject)) {
 			createResult.setStatus(ResponseResultMark.ERROR_LESS_IMP_PARAM);

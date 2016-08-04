@@ -7,7 +7,5 @@ package com.ai.paas.ipaas.rds.service.transfer.vo;
  * @since  
  */
 public class CancelRDS {
-	public String token;
 	public int instanceid;//实例id
-	public String user_id;//创建用户id
 }

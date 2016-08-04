@@ -28,7 +28,6 @@ import com.ai.paas.ipaas.rds.dao.mapper.bo.RdsIncBase;
  */
 public class CreateRDS extends Object{
 	public RdsIncBase instanceBase;
-	public String token;
 	public int createBatmasterNum;// max-1
 	public int createSlaverNum;   // max-n
 	

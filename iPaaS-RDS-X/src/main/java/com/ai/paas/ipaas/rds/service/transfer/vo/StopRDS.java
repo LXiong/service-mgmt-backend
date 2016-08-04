@@ -8,8 +8,6 @@ package com.ai.paas.ipaas.rds.service.transfer.vo;
  */
 public class StopRDS {
 
-	public int user_id;
-	public int token;
 	public int instanceid;
 
 }
