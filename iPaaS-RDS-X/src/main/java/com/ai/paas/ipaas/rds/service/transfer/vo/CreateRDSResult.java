@@ -37,7 +37,7 @@ public class CreateRDSResult extends RDSResult{
 		// TODO Auto-generated constructor stub
 	}
 	public void setStatus(int status){
-		super.status = status;
+		super.setStatus(status);
 	}
 
 }

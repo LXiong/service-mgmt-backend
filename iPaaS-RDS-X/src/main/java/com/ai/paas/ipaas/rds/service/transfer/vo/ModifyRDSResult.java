@@ -9,7 +9,7 @@ package com.ai.paas.ipaas.rds.service.transfer.vo;
 public class ModifyRDSResult extends RDSResult {
 
 	public ModifyRDSResult(int status){
-		super.status = status;
+		super.setStatus(status);
 	}
 	
 }

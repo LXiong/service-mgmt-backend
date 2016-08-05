@@ -9,7 +9,7 @@ package com.ai.paas.ipaas.rds.service.transfer.vo;
 public class StopRDSResult extends RDSResult {
 
 	public StopRDSResult(int warningInstanceStackEmpty) {
-		super.status = warningInstanceStackEmpty;
+		super.setStatus(warningInstanceStackEmpty);
 	}
 	
 

@@ -252,6 +252,39 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 			return g.getGson().toJson(createResult);
 		}
 		
+		if(createObject.instanceBase.getImgId() == null){
+			createObject.instanceBase.setImgId(5);
+		}
+		if(createObject.instanceBase.getMysqlHome() == null){
+			createObject.instanceBase.setMysqlHome("/aifs01");
+		}
+		if(createObject.instanceBase.getMysqlDataHome() == null){
+			createObject.instanceBase.setMysqlDataHome("/aifs01/mysqldata");
+		}
+		if(createObject.instanceBase.getMysqlVolumnPath() == null){
+			createObject.instanceBase.setMysqlVolumnPath("");
+		}
+		if(createObject.instanceBase.getRootName() == null){
+			createObject.instanceBase.setRootName("root");
+		}
+		if(createObject.instanceBase.getRootPassword() == null){
+			createObject.instanceBase.setRootPassword("123456");
+		}
+		if(createObject.instanceBase.getBakId() == null){
+			createObject.instanceBase.setBakId("");
+		}
+		if(createObject.instanceBase.getSlaverId() == null){
+			createObject.instanceBase.setSlaverId("");;
+		}
+		if(createObject.instanceBase.getContainerName() == null){
+			createObject.instanceBase.setContainerName("");
+		}
+		if(createObject.instanceBase.getIncLocation() == null){
+			createObject.instanceBase.setIncLocation("");
+		}
+		
+		
+		
 		// 查询资源情况，根据请求情况与资源情况获取分配计划
 		RdsResourcePoolMapper rdsResPoolMapper =  ServiceUtil.getMapper(RdsResourcePoolMapper.class);
 		RdsResourcePoolCriteria rdsResPoolCri = new RdsResourcePoolCriteria();

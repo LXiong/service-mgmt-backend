@@ -91,18 +91,35 @@ public class TestRdsDubbo {
 	 * 解析方法:CreateRDSResult ct = g.fromGson(obj,CreateRDSResult.class)
 	 * 主要是status值有用
 	 */
+	@Test
+	public void create(){
+		Timestamp time = new Timestamp(System.currentTimeMillis()); 
+		CreateRDS creatObject = new CreateRDS();
+		creatObject.createSlaverNum = 1;
+		creatObject.createBatmasterNum = 0;
+		// user_id对应ccs_user_config中的用户
+		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", "testmysql", "BIU", 5, 100, "","",
+				"mysql6", "", 0, 1, "BIU,MYSQL,TEST","BEIJING", 1, "no describe", "/aifs01", 
+				"/aifs01/mysqldata","", "192.168.*.*", "root", "root", "containerName",
+				"1234", 50000, 2000, 123, 500,time,time);
+		String request = g.toJson(creatObject);
+		System.out.println(request);
+		String result = incManager.create(request);
+		System.out.println("$$$$$$$$$$$$$$$$$$$$result$$$$$$$$$$$$$$$$$$$");
+		System.out.println(result);
+		System.out.println("$$$$$$$$$$$$$$$$$$$$result$$$$$$$$$$$$$$$$$$$");
+	}
+	
+	/**
+	 * passed
+	 */
 //	@Test
-//	public void create(){
-//		Timestamp time = new Timestamp(System.currentTimeMillis()); 
-//		CreateRDS creatObject = new CreateRDS();
-//		creatObject.createSlaverNum = 1;
-//		creatObject.createBatmasterNum = 0;
-//		// user_id对应ccs_user_config中的用户
-//		creatObject.instanceBase = new RdsIncBase("6C4F4DBA96294DDCBC5DBBF2CAD442B5", "testmysql", "BIU", 5, 100, "","",
-//				"mysql6", "", 0, 1, "BIU,MYSQL,TEST","BEIJING", 1, "no describe", "/aifs01", 
-//				"/aifs01/mysqldata","", "192.168.*.*", "root", "root", "containerName",
-//				"1234", 50000, 2000, 123, 500,time,time);
-//		String request = g.toJson(creatObject);
+//	public void createByJSONString(){
+//		String request = "{\"instanceBase\": {\"userId\": \"6C4F4DBA96294DDCBC5DBBF2CAD442B5\","
+//				+ "\"serviceId\": \"testmysql\",\"depId\": \"BIU\",\"incName\": \"mysql6\","
+//				+ "\"incType\": 1,\"incTag\": \"BIU\",\"incLocation\": \"BEIJING\","
+//				+ "\"incDescribe\": \"nodescribe\",\"dbServerId\": \"1234\",\"dbStoreage\": 50000,"
+//				+ "\"maxConnectNum\": 500},\"createBatmasterNum\": 0,\"createSlaverNum\": 1}";
 //		System.out.println(request);
 //		String result = incManager.create(request);
 //		System.out.println(result);
@@ -131,11 +148,13 @@ public class TestRdsDubbo {
 //	@Test
 //	public void cancel(){
 //		CancelRDS cancelObject = new CancelRDS();
-//		cancelObject.instanceid = 77;
+//		cancelObject.instanceid = 88;
 //		String request = g.toJson(cancelObject);
 //		System.out.println(request);
 //		String result = incManager.cancel(request);
+//		System.out.println("$$$$$$$$$$$$$$$$$$$$result$$$$$$$$$$$$$$$$$$$");
 //		System.out.println(result);
+//		System.out.println("$$$$$$$$$$$$$$$$$$$$result$$$$$$$$$$$$$$$$$$$");
 //	}
 	
 	/**
@@ -146,7 +165,7 @@ public class TestRdsDubbo {
 //	@Test
 //	public void stop(){
 //		StopRDS stopObject = new StopRDS();
-//		stopObject.instanceid = 81;
+//		stopObject.instanceid = 90;
 //		String request = g.toJson(stopObject);
 //		System.out.println(request);
 //		String result = incManager.stop(request);
@@ -158,14 +177,14 @@ public class TestRdsDubbo {
 	 * 解析方法:StartRDSResult ct = g.fromGson(obj,StartRDSResult.class)
 	 * 主要是status值有用
 	 */
-	@Test
-	public void start(){
-		StartRDS startObject = new StartRDS();
-		startObject.instanceid = 81;
-		String request = g.toJson(startObject);
-		System.out.println(request);
-		String result = incManager.start(request);
-		System.out.println(result);
-	}
+//	@Test
+//	public void start(){
+//		StartRDS startObject = new StartRDS();
+//		startObject.instanceid = 90;
+//		String request = g.toJson(startObject);
+//		System.out.println(request);
+//		String result = incManager.start(request);
+//		System.out.println(result);
+//	}
 	
 }

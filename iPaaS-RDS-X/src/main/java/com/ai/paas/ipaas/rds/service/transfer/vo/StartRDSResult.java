@@ -9,7 +9,7 @@ package com.ai.paas.ipaas.rds.service.transfer.vo;
 public class StartRDSResult extends RDSResult {
 
 	public StartRDSResult(int warningInstanceStackEmpty) {
-		super.status = warningInstanceStackEmpty;
+		super.setStatus(warningInstanceStackEmpty);
 	}
 
 }

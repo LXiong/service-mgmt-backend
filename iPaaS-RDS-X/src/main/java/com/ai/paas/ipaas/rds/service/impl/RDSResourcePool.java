@@ -1,5 +1,8 @@
 package com.ai.paas.ipaas.rds.service.impl;
 
+import java.sql.Time;
+import java.sql.Timestamp;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,7 +36,12 @@ public class RDSResourcePool implements IRDSResourcePool {
 	}
 	@Override
 	public String add(String getParam) {
+		Timestamp time = new Timestamp(System.currentTimeMillis());
 		RdsResourcePool rp = g.getGson().fromJson(getParam, RdsResourcePool.class);
+		rp.setStatus(1);
+		rp.setCycle(1);
+		rp.setInstancecreatetime(time);
+		rp.setInstancelastupdatetime(time);
 		RdsResourcePoolMapper rdsResMapper = ServiceUtil.getMapper(RdsResourcePoolMapper.class);
 		rdsResMapper.insert(rp);
 		return "success";
