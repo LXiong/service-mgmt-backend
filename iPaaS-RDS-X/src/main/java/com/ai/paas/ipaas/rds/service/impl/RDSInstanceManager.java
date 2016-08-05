@@ -24,6 +24,7 @@ import com.ai.paas.ipaas.agent.util.AgentUtil;
 import com.ai.paas.ipaas.agent.util.AidUtil;
 import com.ai.paas.ipaas.base.dao.interfaces.IpaasImageResourceMapper;
 import com.ai.paas.ipaas.base.dao.mapper.bo.IpaasImageResource;
+import com.ai.paas.ipaas.base.dao.mapper.bo.IpaasImageResourceCriteria;
 import com.ai.paas.ipaas.ccs.constants.ConfigCenterDubboConstants.PathType;
 import com.ai.paas.ipaas.ccs.service.ICCSComponentManageSv;
 import com.ai.paas.ipaas.ccs.service.dto.CCSComponentOperationParam;
@@ -564,7 +565,12 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 		RdsResourcePoolMapper resPoolMapper = ServiceUtil.getMapper(RdsResourcePoolMapper.class);
 		RdsResourcePool incRes = resPoolMapper.selectByPrimaryKey(savedRdsIncBase.getResId());
 		IpaasImageResourceMapper imgResMapper = ServiceUtil.getMapper(IpaasImageResourceMapper.class);
-		IpaasImageResource imgRes = imgResMapper.selectByPrimaryKey(savedRdsIncBase.getImgId());
+//		IpaasImageResource imgRes = imgResMapper.selectByPrimaryKey(savedRdsIncBase.getImgId());
+		IpaasImageResourceCriteria imgCri = new IpaasImageResourceCriteria();
+		imgCri.createCriteria().andImageCodeEqualTo("mysql").andServiceCodeEqualTo("RDS").andStatusEqualTo(1);
+		List<IpaasImageResource> imgResConstant = imgResMapper.selectByExample(imgCri);
+		IpaasImageResource imgRes = imgResConstant.get(0);
+		
 		if(savedRdsIncBase.getIncType().intValue() > 1 ){
 			if(savedRdsIncBase.getMasterid() > 0){
 				masterInc = incBaseMapper.selectByPrimaryKey(savedRdsIncBase.getMasterid());
@@ -844,8 +850,6 @@ public class RDSInstanceManager implements IRDSInstanceManager {
 	private void commandInstance(RdsIncBase savedRdsIncBase, String command) throws ClientProtocolException, IOException, PaasException {
 		RdsResourcePoolMapper resPoolMapper = ServiceUtil.getMapper(RdsResourcePoolMapper.class);
 		RdsResourcePool incRes = resPoolMapper.selectByPrimaryKey(savedRdsIncBase.getResId());
-		IpaasImageResourceMapper imgResMapper = ServiceUtil.getMapper(IpaasImageResourceMapper.class);
-		IpaasImageResource imgRes = imgResMapper.selectByPrimaryKey(savedRdsIncBase.getImgId());
 		
 		String basePath = AgentUtil.getAgentFilePath(AidUtil.getAid());
 		String rdsPath = basePath + "rds";
